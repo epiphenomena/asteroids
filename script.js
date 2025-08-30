@@ -5,12 +5,24 @@ const gameOverScreen = document.getElementById('gameOverScreen');
 const finalScoreElement = document.getElementById('finalScore');
 const restartButton = document.getElementById('restartButton');
 
+// Control buttons
+const rotateLeftBtn = document.getElementById('rotateLeft');
+const rotateRightBtn = document.getElementById('rotateRight');
+const thrustBtn = document.getElementById('thrust');
+const shootBtn = document.getElementById('shoot');
+
 // Game state
 let ship;
 let asteroids = [];
 let bullets = [];
 let score = 0;
 let gameOver = false;
+
+// Input state
+let rotateLeft = false;
+let rotateRight = false;
+let thrust = false;
+let shoot = false;
 
 // Set canvas dimensions to match window
 function resizeCanvas() {
@@ -22,6 +34,7 @@ function resizeCanvas() {
 function init() {
     resizeCanvas();
     resetGame();
+    setupControls();
     gameLoop();
 }
 
@@ -37,7 +50,9 @@ function resetGame() {
         rotationSpeed: 0.05,
         acceleration: 0.5,
         maxSpeed: 5,
-        friction: 0.98
+        friction: 0.98,
+        shootCooldown: 0,
+        maxShootCooldown: 10
     };
     
     // Reset game state
@@ -46,6 +61,75 @@ function resetGame() {
     score = 0;
     gameOver = false;
     gameOverScreen.classList.add('hidden');
+}
+
+// Setup mobile controls
+function setupControls() {
+    // Rotate left
+    rotateLeftBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        rotateLeft = true;
+    });
+    
+    rotateLeftBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        rotateLeft = false;
+    });
+    
+    rotateLeftBtn.addEventListener('mousedown', () => rotateLeft = true);
+    rotateLeftBtn.addEventListener('mouseup', () => rotateLeft = false);
+    rotateLeftBtn.addEventListener('mouseleave', () => rotateLeft = false);
+    
+    // Rotate right
+    rotateRightBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        rotateRight = true;
+    });
+    
+    rotateRightBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        rotateRight = false;
+    });
+    
+    rotateRightBtn.addEventListener('mousedown', () => rotateRight = true);
+    rotateRightBtn.addEventListener('mouseup', () => rotateRight = false);
+    rotateRightBtn.addEventListener('mouseleave', () => rotateRight = false);
+    
+    // Thrust
+    thrustBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        thrust = true;
+    });
+    
+    thrustBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        thrust = false;
+    });
+    
+    thrustBtn.addEventListener('mousedown', () => thrust = true);
+    thrustBtn.addEventListener('mouseup', () => thrust = false);
+    thrustBtn.addEventListener('mouseleave', () => thrust = false);
+    
+    // Shoot
+    shootBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        shoot = true;
+    });
+    
+    shootBtn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        shoot = false;
+    });
+    
+    shootBtn.addEventListener('mousedown', () => shoot = true);
+    shootBtn.addEventListener('mouseup', () => shoot = false);
+    
+    // Prevent default touch behaviors
+    document.addEventListener('touchstart', (e) => {
+        if (e.target === canvas) {
+            e.preventDefault();
+        }
+    }, { passive: false });
 }
 
 // Main game loop
@@ -59,6 +143,9 @@ function gameLoop() {
 
 // Update game state
 function update() {
+    // Handle controls
+    handleControls();
+    
     // Update ship position
     updateShip();
     
@@ -67,6 +154,67 @@ function update() {
     
     // Update asteroids
     updateAsteroids();
+}
+
+// Handle player input
+function handleControls() {
+    // Rotation
+    if (rotateLeft) {
+        ship.angle -= ship.rotationSpeed;
+    }
+    if (rotateRight) {
+        ship.angle += ship.rotationSpeed;
+    }
+    
+    // Thrust
+    if (thrust) {
+        // Calculate thrust vector
+        const thrustX = Math.cos(ship.angle) * ship.acceleration;
+        const thrustY = Math.sin(ship.angle) * ship.acceleration;
+        
+        // Apply thrust
+        ship.velocity.x += thrustX;
+        ship.velocity.y += thrustY;
+        
+        // Limit maximum speed
+        const speed = Math.sqrt(ship.velocity.x * ship.velocity.x + ship.velocity.y * ship.velocity.y);
+        if (speed > ship.maxSpeed) {
+            ship.velocity.x = (ship.velocity.x / speed) * ship.maxSpeed;
+            ship.velocity.y = (ship.velocity.y / speed) * ship.maxSpeed;
+        }
+    }
+    
+    // Shooting
+    if (shoot && ship.shootCooldown <= 0) {
+        fireBullet();
+        ship.shootCooldown = ship.maxShootCooldown;
+    }
+    
+    // Update shoot cooldown
+    if (ship.shootCooldown > 0) {
+        ship.shootCooldown--;
+    }
+}
+
+// Fire a bullet from the ship
+function fireBullet() {
+    // Calculate bullet starting position (at the nose of the ship)
+    const startX = ship.x + Math.cos(ship.angle) * 15;
+    const startY = ship.y + Math.sin(ship.angle) * 15;
+    
+    // Calculate bullet velocity (same direction as ship is facing)
+    const velocityX = Math.cos(ship.angle) * 7;
+    const velocityY = Math.sin(ship.angle) * 7;
+    
+    // Create bullet
+    bullets.push({
+        x: startX,
+        y: startY,
+        radius: 2,
+        velocity: { x: velocityX, y: velocityY },
+        age: 0,
+        maxAge: 60 // Bullets disappear after 60 frames
+    });
 }
 
 // Update ship position and handle wrapping
