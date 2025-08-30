@@ -215,6 +215,8 @@ function gameLoop() {
         update();
     }
     render();
+    
+    // Continue the game loop even after game over to keep rendering the game over screen
     requestAnimationFrame(gameLoop);
 }
 
@@ -241,14 +243,12 @@ function update() {
 
 // Handle player input
 function handleControls() {
-    // Rotate ship toward mouse/touch position (only if ship is visible)
-    if (ship.visible) {
-        const centerX = canvas.width / 2;
-        const centerY = canvas.height / 2;
-        const dx = mouseX - centerX;
-        const dy = mouseY - centerY;
-        ship.angle = Math.atan2(dy, dx);
-    }
+    // Rotate ship toward mouse/touch position (always, not just when visible)
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const dx = mouseX - centerX;
+    const dy = mouseY - centerY;
+    ship.angle = Math.atan2(dy, dx);
     
     // Thrust (only if ship is visible)
     if (thrust && ship.visible) {
