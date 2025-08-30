@@ -160,25 +160,27 @@ function createAsteroids(count) {
 
 // Create a single asteroid
 function createAsteroid(size = 3, x = null, y = null) {
-    // If position not specified, create at random edge
+    // If position not specified, create at random edge relative to ship position
     if (x === null || y === null) {
         const side = Math.floor(Math.random() * 4);
+        const buffer = 100; // Distance from screen edge
+        
         switch (side) {
             case 0: // Top
-                x = Math.random() * canvas.width;
-                y = -20;
+                x = ship.x + (Math.random() * canvas.width - canvas.width / 2);
+                y = ship.y - canvas.height / 2 - buffer;
                 break;
             case 1: // Right
-                x = canvas.width + 20;
-                y = Math.random() * canvas.height;
+                x = ship.x + canvas.width / 2 + buffer;
+                y = ship.y + (Math.random() * canvas.height - canvas.height / 2);
                 break;
             case 2: // Bottom
-                x = Math.random() * canvas.width;
-                y = canvas.height + 20;
+                x = ship.x + (Math.random() * canvas.width - canvas.width / 2);
+                y = ship.y + canvas.height / 2 + buffer;
                 break;
             case 3: // Left
-                x = -20;
-                y = Math.random() * canvas.height;
+                x = ship.x - canvas.width / 2 - buffer;
+                y = ship.y + (Math.random() * canvas.height - canvas.height / 2);
                 break;
         }
     }
