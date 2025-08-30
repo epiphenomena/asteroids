@@ -533,6 +533,12 @@ function render() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     if (gameStarted) {
+        // Save the context
+        ctx.save();
+        
+        // Translate the context so the ship is always at the center of the screen
+        ctx.translate(canvas.width / 2 - ship.x, canvas.height / 2 - ship.y);
+        
         // Draw particles
         drawParticles();
         
@@ -542,8 +548,11 @@ function render() {
         // Draw asteroids
         drawAsteroids();
         
-        // Draw ship
-        drawShip();
+        // Restore the context
+        ctx.restore();
+        
+        // Draw ship at the center of the screen
+        drawShipAtCenter();
     }
 }
 
@@ -566,14 +575,44 @@ function drawShip() {
     ctx.restore();
 }
 
+// Draw all particles
+function drawParticles() {
+    // Save the context
+    ctx.save();
+    
+    // Translate the context so the ship is always at the center of the screen
+    ctx.translate(canvas.width / 2 - ship.x, canvas.height / 2 - ship.y);
+    
+    for (const particle of particles) {
+        // Fade out as particle life decreases
+        const alpha = particle.life / particle.maxLife;
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    // Restore the context
+    ctx.restore();
+}
+
 // Draw all bullets
 function drawBullets() {
+    // Save the context
+    ctx.save();
+    
+    // Translate the context so the ship is always at the center of the screen
+    ctx.translate(canvas.width / 2 - ship.x, canvas.height / 2 - ship.y);
+    
     ctx.fillStyle = 'white';
     for (const bullet of bullets) {
         ctx.beginPath();
         ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
         ctx.fill();
     }
+    
+    // Restore the context
+    ctx.restore();
 }
 
 // Draw all asteroids
@@ -587,16 +626,23 @@ function drawAsteroids() {
     }
 }
 
-// Draw all particles
-function drawParticles() {
-    for (const particle of particles) {
-        // Fade out as particle life decreases
-        const alpha = particle.life / particle.maxLife;
-        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-        ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
-        ctx.fill();
-    }
+// Draw the player ship at the center of the screen
+function drawShipAtCenter() {
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(ship.angle);
+    
+    // Draw ship as a triangle
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(10, 0); // Nose of the ship
+    ctx.lineTo(-10, -7); // Rear left
+    ctx.lineTo(-10, 7); // Rear right
+    ctx.closePath();
+    ctx.stroke();
+    
+    ctx.restore();
 }
 
 // End the game
