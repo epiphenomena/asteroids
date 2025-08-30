@@ -287,8 +287,8 @@ function createThrustParticles() {
             y: ship.y + offsetY + (Math.random() - 0.5) * 5,
             radius: Math.random() * 2 + 1,
             velocity: {
-                x: (Math.random() - 0.5) * 2,
-                y: (Math.random() - 0.5) * 2
+                x: (Math.random() - 0.5) * 2 + ship.velocity.x,
+                y: (Math.random() - 0.5) * 2 + ship.velocity.y
             },
             life: 20,
             maxLife: 20
