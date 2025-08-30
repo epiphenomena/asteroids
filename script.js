@@ -405,6 +405,8 @@ function checkCollisions() {
     // Bullet-asteroid collisions
     for (let i = bullets.length - 1; i >= 0; i--) {
         const bullet = bullets[i];
+        let bulletDestroyed = false;
+        
         for (let j = asteroids.length - 1; j >= 0; j--) {
             const asteroid = asteroids[j];
             
@@ -423,9 +425,17 @@ function checkCollisions() {
                 score += 10 * asteroid.size;
                 if (scoreValue) scoreValue.textContent = score;
                 
+                // Mark bullet as destroyed
+                bulletDestroyed = true;
+                
                 // Break since bullet is destroyed
                 break;
             }
+        }
+        
+        // If bullet was destroyed, skip to next bullet
+        if (bulletDestroyed) {
+            continue;
         }
     }
     
@@ -448,6 +458,10 @@ function checkCollisions() {
             // Check for game over
             if (lives <= 0) {
                 endGame();
+            } else {
+                // Reset ship position to center
+                ship.x = 0;
+                ship.y = 0;
             }
             
             // Since we're modifying the asteroids array, break to avoid issues
