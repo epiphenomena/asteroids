@@ -62,19 +62,32 @@ function saveHighScore() {
 // Setup event listeners
 function setupEventListeners() {
     // Start button
-    startButton.addEventListener('click', () => {
+    startButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Start button clicked');
         startScreen.style.display = 'none';
         gameStarted = true;
         resetGame();
     });
     
     // Restart button
-    restartButton.addEventListener('click', () => {
+    restartButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('Restart button clicked');
         gameOverScreen.classList.remove('show');
         // Also hide explicitly to ensure it's hidden
         gameOverScreen.style.display = 'none';
         resetGame();
     });
+    
+    // Prevent touch events on screens from propagating
+    startScreen.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+    }, { passive: false });
+    
+    gameOverScreen.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+    }, { passive: false });
     
     // Mouse/Touch controls
     canvas.addEventListener('mousedown', (e) => {
@@ -104,9 +117,11 @@ function setupEventListeners() {
     
     canvas.addEventListener('touchmove', (e) => {
         e.preventDefault();
-        const rect = canvas.getBoundingClientRect();
-        mouseX = e.touches[0].clientX - rect.left;
-        mouseY = e.touches[0].clientY - rect.top;
+        if (e.touches.length > 0) {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.touches[0].clientX - rect.left;
+            mouseY = e.touches[0].clientY - rect.top;
+        }
     });
     
     // Prevent default touch behaviors
