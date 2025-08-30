@@ -408,6 +408,11 @@ function checkCollisions() {
         let bulletDestroyed = false;
         
         for (let j = asteroids.length - 1; j >= 0; j--) {
+            // Safety check to ensure asteroid still exists
+            if (j >= asteroids.length) {
+                continue;
+            }
+            
             const asteroid = asteroids[j];
             
             // Check collision
@@ -441,6 +446,11 @@ function checkCollisions() {
     
     // Ship-asteroid collisions (ship is at center 0,0)
     for (let i = asteroids.length - 1; i >= 0; i--) {
+        // Safety check to ensure asteroid still exists
+        if (i >= asteroids.length) {
+            continue;
+        }
+        
         const asteroid = asteroids[i];
         
         if (distance(0, 0, asteroid.x, asteroid.y) < ship.radius + asteroid.radius) {
@@ -496,6 +506,11 @@ function distance(x1, y1, x2, y2) {
 
 // Split an asteroid into smaller ones or remove it
 function splitAsteroid(index) {
+    // Check if index is valid
+    if (index < 0 || index >= asteroids.length) {
+        return;
+    }
+    
     const asteroid = asteroids[index];
     
     // Remove the asteroid
