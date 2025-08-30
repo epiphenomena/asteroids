@@ -544,10 +544,10 @@ function render() {
     }
 }
 
-// Draw the player ship at the center of the screen
+// Draw the player ship
 function drawShip() {
     ctx.save();
-    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.translate(ship.x, ship.y);
     ctx.rotate(ship.angle);
     
     // Draw ship as a triangle
