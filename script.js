@@ -561,23 +561,18 @@ function drawShip() {
 
 // Draw all particles
 function drawParticles() {
-    // Save the context
-    ctx.save();
-    
-    // Translate the context so the ship is always at the center of the screen
-    ctx.translate(canvas.width / 2 - ship.x, canvas.height / 2 - ship.y);
-    
     for (const particle of particles) {
+        // Calculate screen position relative to ship
+        const screenX = particle.x - ship.x + canvas.width / 2;
+        const screenY = particle.y - ship.y + canvas.height / 2;
+        
         // Fade out as particle life decreases
         const alpha = particle.life / particle.maxLife;
         ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
         ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+        ctx.arc(screenX, screenY, particle.radius, 0, Math.PI * 2);
         ctx.fill();
     }
-    
-    // Restore the context
-    ctx.restore();
 }
 
 // Draw all bullets
