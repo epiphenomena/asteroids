@@ -233,13 +233,12 @@ function update() {
 
 // Handle player input
 function handleControls() {
-    // Rotation
-    if (rotateLeft) {
-        ship.angle -= ship.rotationSpeed;
-    }
-    if (rotateRight) {
-        ship.angle += ship.rotationSpeed;
-    }
+    // Rotate ship toward mouse/touch position
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const dx = mouseX - centerX;
+    const dy = mouseY - centerY;
+    ship.angle = Math.atan2(dy, dx);
     
     // Thrust
     if (thrust) {
@@ -262,8 +261,8 @@ function handleControls() {
         createThrustParticles();
     }
     
-    // Shooting
-    if (shoot && ship.shootCooldown <= 0) {
+    // Automatically shoot at a fixed rate
+    if (ship.shootCooldown <= 0) {
         fireBullet();
         ship.shootCooldown = ship.maxShootCooldown;
     }
