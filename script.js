@@ -193,7 +193,10 @@ function resetGame() {
     
     // Update UI
     if (scoreValue) scoreValue.textContent = score;
-    if (livesValue) livesValue.textContent = lives;
+    if (livesValue) {
+        livesValue.textContent = lives;
+        console.log('Lives initialized to:', lives);
+    }
     
     // Create initial asteroids
     createAsteroids(5);
@@ -496,6 +499,12 @@ function checkCollisions() {
             
             // Check collision
             if (distance(bullet.x, bullet.y, asteroid.x, asteroid.y) < bullet.radius + asteroid.radius) {
+                console.log('Bullet-asteroid collision detected!');
+                console.log('  Bullet position:', bullet.x, bullet.y);
+                console.log('  Asteroid position:', asteroid.x, asteroid.y);
+                console.log('  Distance:', distance(bullet.x, bullet.y, asteroid.x, asteroid.y));
+                console.log('  Collision threshold:', bullet.radius + asteroid.radius);
+                
                 // Create explosion particles
                 createExplosion(asteroid.x, asteroid.y);
                 
@@ -527,6 +536,15 @@ function checkCollisions() {
                     }
                 }
                 
+                // If all asteroids are destroyed, create a new wave
+                if (asteroids.length === 0) {
+                    setTimeout(() => {
+                        if (asteroids.length === 0 && !gameOver) {
+                            createAsteroids(5);
+                        }
+                    }, 100);
+                }
+                
                 // Process only one collision per frame
                 return;
             }
@@ -538,12 +556,22 @@ function checkCollisions() {
         for (let i = 0; i < asteroids.length; i++) {
             const asteroid = asteroids[i];
             
-            if (distance(0, 0, asteroid.x, asteroid.y) < ship.radius + asteroid.radius) {
+            const distanceToAsteroid = distance(0, 0, asteroid.x, asteroid.y);
+            const collisionDistance = ship.radius + asteroid.radius;
+            
+            if (distanceToAsteroid < collisionDistance) {
+                console.log('Ship-asteroid collision detected!');
+                console.log('  Distance:', distanceToAsteroid);
+                console.log('  Collision threshold:', collisionDistance);
+                console.log('  Asteroid position:', asteroid.x, asteroid.y);
+                console.log('  Ship position: 0, 0');
+                
                 // Create explosion particles at ship position (center of screen)
                 createExplosion(0, 0);
                 
                 // Lose a life
                 lives--;
+                console.log('Life lost. Lives now:', lives);
                 if (livesValue) livesValue.textContent = lives;
                 
                 // Reset ship velocity to zero
@@ -562,7 +590,7 @@ function checkCollisions() {
                 }
                 
                 // Process only one collision per frame
-                return;
+                break;
             }
         }
     }
