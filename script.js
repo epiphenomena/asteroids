@@ -402,57 +402,33 @@ function updateParticles() {
 
 // Check for collisions between bullets and asteroids, and ship and asteroids
 function checkCollisions() {
-    // Create lists of collisions to process
-    const bulletAsteroidCollisions = [];
-    let shipAsteroidCollision = null;
+    // Flag objects for removal instead of splicing arrays during iteration
+    const bulletsToRemove = new Set();
+    const asteroidsToRemove = new Set();
     
     // Find all bullet-asteroid collisions
     for (let i = 0; i < bullets.length; i++) {
+        if (bulletsToRemove.has(i)) continue;
+        
         const bullet = bullets[i];
         
         for (let j = 0; j < asteroids.length; j++) {
+            if (asteroidsToRemove.has(j)) continue;
+            
             const asteroid = asteroids[j];
             
             // Check collision
             if (distance(bullet.x, bullet.y, asteroid.x, asteroid.y) < bullet.radius + asteroid.radius) {
-                bulletAsteroidCollisions.push({ bulletIndex: i, asteroidIndex: j, asteroid: asteroid });
-                break; // Each bullet can only hit one asteroid
-            }
-        }
-    }
-    
-    // Find ship-asteroid collision
-    for (let i = 0; i < asteroids.length; i++) {
-        const asteroid = asteroids[i];
-        
-        if (distance(0, 0, asteroid.x, asteroid.y) < ship.radius + asteroid.radius) {
-            shipAsteroidCollision = { asteroidIndex: i, asteroid: asteroid };
-            break; // Ship can only collide with one asteroid per frame
-        }
-    }
-    
-    // Process bullet-asteroid collisions
-    if (bulletAsteroidCollisions.length > 0) {
-        // Process the first collision
-        const collision = bulletAsteroidCollisions[0];
-        
-        // Verify indices are still valid
-        if (collision.bulletIndex < bullets.length && collision.asteroidIndex < asteroids.length) {
-            const bullet = bullets[collision.bulletIndex];
-            const asteroid = asteroids[collision.asteroidIndex];
-            
-            // Double-check the collision (in case objects moved)
-            if (distance(bullet.x, bullet.y, asteroid.x, asteroid.y) < bullet.radius + asteroid.radius) {
+                // Mark bullet and asteroid for removal
+                bulletsToRemove.add(i);
+                asteroidsToRemove.add(j);
+                
                 // Create explosion particles
                 createExplosion(asteroid.x, asteroid.y);
                 
                 // Increase score
                 score += 10 * asteroid.size;
                 if (scoreValue) scoreValue.textContent = score;
-                
-                // Remove bullet and asteroid
-                bullets.splice(collision.bulletIndex, 1);
-                asteroids.splice(collision.asteroidIndex, 1);
                 
                 // If asteroid is large enough, split it into smaller ones
                 if (asteroid.size > 1) {
@@ -474,62 +450,74 @@ function checkCollisions() {
                     }
                 }
                 
-                // If all asteroids are destroyed, create a new wave
-                if (asteroids.length === 0) {
-                    setTimeout(() => {
-                        if (asteroids.length === 0 && !gameOver) {
-                            createAsteroids(5);
-                        }
-                    }, 100);
-                }
+                break; // Each bullet can only hit one asteroid
             }
         }
     }
     
-    // Process ship-asteroid collision
-    if (shipAsteroidCollision) {
-        // Verify index is still valid
-        if (shipAsteroidCollision.asteroidIndex < asteroids.length) {
-            const asteroid = asteroids[shipAsteroidCollision.asteroidIndex];
+    // Remove bullets (in reverse order to not affect indices)
+    const bulletsToRemoveArray = Array.from(bulletsToRemove).sort((a, b) => b - a);
+    for (const index of bulletsToRemoveArray) {
+        bullets.splice(index, 1);
+    }
+    
+    // Remove asteroids (in reverse order to not affect indices)
+    const asteroidsToRemoveArray = Array.from(asteroidsToRemove).sort((a, b) => b - a);
+    for (const index of asteroidsToRemoveArray) {
+        asteroids.splice(index, 1);
+    }
+    
+    // If all asteroids are destroyed, create a new wave
+    if (asteroids.length === 0) {
+        setTimeout(() => {
+            if (asteroids.length === 0 && !gameOver) {
+                createAsteroids(5);
+            }
+        }, 100);
+    }
+    
+    // Find and process ship-asteroid collision
+    for (let i = 0; i < asteroids.length; i++) {
+        const asteroid = asteroids[i];
+        
+        if (distance(0, 0, asteroid.x, asteroid.y) < ship.radius + asteroid.radius) {
+            // Create explosion particles at ship position (center of screen)
+            createExplosion(0, 0);
             
-            // Double-check the collision (in case objects moved)
-            if (distance(0, 0, asteroid.x, asteroid.y) < ship.radius + asteroid.radius) {
-                // Create explosion particles at ship position (center of screen)
-                createExplosion(0, 0);
+            // Lose a life
+            lives--;
+            if (livesValue) livesValue.textContent = lives;
+            
+            // Reset ship velocity to zero
+            ship.velocity.x = 0;
+            ship.velocity.y = 0;
+            
+            // Check for game over
+            if (lives <= 0) {
+                endGame();
+            } else {
+                // Reset ship position to center
+                ship.x = 0;
+                ship.y = 0;
                 
-                // Lose a life
-                lives--;
-                if (livesValue) livesValue.textContent = lives;
+                // Move all objects to maintain ship at center
+                for (let j = asteroids.length - 1; j >= 0; j--) {
+                    asteroids[j].x -= ship.x;
+                    asteroids[j].y -= ship.y;
+                }
                 
-                // Reset ship velocity to zero
-                ship.velocity.x = 0;
-                ship.velocity.y = 0;
+                for (let j = bullets.length - 1; j >= 0; j--) {
+                    bullets[j].x -= ship.x;
+                    bullets[j].y -= ship.y;
+                }
                 
-                // Check for game over
-                if (lives <= 0) {
-                    endGame();
-                } else {
-                    // Reset ship position to center
-                    ship.x = 0;
-                    ship.y = 0;
-                    
-                    // Move all objects to maintain ship at center
-                    for (let i = asteroids.length - 1; i >= 0; i--) {
-                        asteroids[i].x -= ship.x;
-                        asteroids[i].y -= ship.y;
-                    }
-                    
-                    for (let i = bullets.length - 1; i >= 0; i--) {
-                        bullets[i].x -= ship.x;
-                        bullets[i].y -= ship.y;
-                    }
-                    
-                    for (let i = particles.length - 1; i >= 0; i--) {
-                        particles[i].x -= ship.x;
-                        particles[i].y -= ship.y;
-                    }
+                for (let j = particles.length - 1; j >= 0; j--) {
+                    particles[j].x -= ship.x;
+                    particles[j].y -= ship.y;
                 }
             }
+            
+            break; // Ship can only collide with one asteroid per frame
         }
     }
 }
