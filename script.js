@@ -134,7 +134,9 @@ function resetGame() {
         shootCooldown: 0,
         maxShootCooldown: 20, // 50% faster firing rate (30 * 0.67 ≈ 20)
         invincible: false,
-        invincibilityTime: 0
+        invincibilityTime: 0,
+        respawnTime: 0,
+        visible: true
     };
     
     // Reset game state
@@ -333,6 +335,17 @@ function updateShip() {
         }
     }
     
+    // Update respawn timing
+    if (ship.respawnTime > 0) {
+        ship.respawnTime--;
+        if (ship.respawnTime <= 0) {
+            ship.visible = true;
+            // Make ship invincible for 5 seconds after respawn
+            ship.invincible = true;
+            ship.invincibilityTime = 300; // 5 seconds at 60fps
+        }
+    }
+    
     // Move the world instead of the ship
     // Update all other objects in the opposite direction of ship movement
     for (const asteroid of asteroids) {
@@ -458,8 +471,8 @@ function checkCollisions() {
         }
     }
     
-    // Check for ship-asteroid collisions (only if ship is not invincible)
-    if (!ship.invincible) {
+    // Check for ship-asteroid collisions (only if ship is not invincible and visible)
+    if (!ship.invincible && ship.visible) {
         for (let i = 0; i < asteroids.length; i++) {
             const asteroid = asteroids[i];
             
@@ -479,12 +492,9 @@ function checkCollisions() {
                 if (lives <= 0) {
                     endGame();
                 } else {
-                    // Make ship invincible for 5 seconds (300 frames at 60fps)
-                    ship.invincible = true;
-                    ship.invincibilityTime = 300;
-                    
-                    // Keep ship at the same position where it was hit
-                    // (it's already at 0,0 in our coordinate system)
+                    // Make ship invisible for 2 seconds (120 frames at 60fps)
+                    ship.visible = false;
+                    ship.respawnTime = 120;
                 }
                 
                 // Process only one collision per frame
@@ -661,6 +671,11 @@ function drawAsteroids() {
 
 // Draw the player ship at the center of the screen
 function drawShipAtCenter() {
+    // Only draw the ship if it's visible
+    if (!ship.visible) {
+        return;
+    }
+    
     ctx.save();
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.rotate(ship.angle);
