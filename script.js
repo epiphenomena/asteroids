@@ -500,7 +500,9 @@ function checkCollisions() {
                 bullets.splice(i, 1);
                 asteroids.splice(j, 1);
                 
-                // If asteroid is large enough, split it into smaller ones (but only once)
+                // If asteroid is large (size 3), split it into medium ones (size 2)
+                // Medium asteroids (size 2) split into small ones (size 1)
+                // Small asteroids (size 1) are just destroyed
                 if (asteroid.size > 1) {
                     // Create two smaller asteroids
                     for (let k = 0; k < 2; k++) {
