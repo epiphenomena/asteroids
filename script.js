@@ -31,6 +31,10 @@ let mouseY = 0;
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    
+    // Initialize mouse position to center of canvas
+    mouseX = canvas.width / 2;
+    mouseY = canvas.height / 2;
 }
 
 // Initialize game
@@ -39,6 +43,9 @@ function init() {
     setupEventListeners();
     loadHighScore();
     gameLoop();
+    
+    // Ensure game doesn't start automatically
+    gameStarted = false;
 }
 
 // Load high score from localStorage
@@ -137,6 +144,10 @@ function setupEventListeners() {
 
 // Reset game state
 function resetGame() {
+    // Initialize mouse position to center of canvas
+    mouseX = canvas.width / 2;
+    mouseY = canvas.height / 2;
+    
     // Create player ship at center
     ship = {
         x: 0,
@@ -258,12 +269,19 @@ function update() {
 
 // Handle player input
 function handleControls() {
-    // Rotate ship toward mouse/touch position (always, not just when visible)
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const dx = mouseX - centerX;
-    const dy = mouseY - centerY;
-    ship.angle = Math.atan2(dy, dx);
+    // Always rotate ship toward mouse/touch position
+    // But ensure we have valid coordinates
+    if (typeof mouseX !== 'undefined' && typeof mouseY !== 'undefined') {
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const dx = mouseX - centerX;
+        const dy = mouseY - centerY;
+        
+        // Only update angle if we have meaningful values
+        if (dx !== 0 || dy !== 0) {
+            ship.angle = Math.atan2(dy, dx);
+        }
+    }
     
     // Thrust (only if ship is visible)
     if (thrust && ship.visible) {
