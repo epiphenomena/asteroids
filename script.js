@@ -402,18 +402,25 @@ function updateParticles() {
 
 // Check for collisions between bullets and asteroids, and ship and asteroids
 function checkCollisions() {
+    // Create a copy of the arrays to avoid issues with modifying them during iteration
+    const bulletsCopy = [...bullets];
+    const asteroidsCopy = [...asteroids];
+    
     // Bullet-asteroid collisions
-    for (let i = bullets.length - 1; i >= 0; i--) {
-        const bullet = bullets[i];
+    for (let i = bulletsCopy.length - 1; i >= 0; i--) {
+        const bullet = bulletsCopy[i];
         let bulletHit = false;
         
-        for (let j = asteroids.length - 1; j >= 0; j--) {
-            // Make sure both bullet and asteroid still exist
-            if (i >= bullets.length || j >= asteroids.length) {
+        for (let j = asteroidsCopy.length - 1; j >= 0; j--) {
+            const asteroid = asteroidsCopy[j];
+            
+            // Check if both bullet and asteroid still exist in the original arrays
+            const bulletIndex = bullets.indexOf(bullet);
+            const asteroidIndex = asteroids.indexOf(asteroid);
+            
+            if (bulletIndex === -1 || asteroidIndex === -1) {
                 continue;
             }
-            
-            const asteroid = asteroids[j];
             
             // Check collision
             if (distance(bullet.x, bullet.y, asteroid.x, asteroid.y) < bullet.radius + asteroid.radius) {
@@ -424,12 +431,9 @@ function checkCollisions() {
                 score += 10 * asteroid.size;
                 if (scoreValue) scoreValue.textContent = score;
                 
-                // Remove bullet
-                bullets.splice(i, 1);
-                bulletHit = true;
-                
-                // Split asteroid or remove it
-                splitAsteroid(j);
+                // Remove bullet and asteroid from original arrays
+                bullets.splice(bulletIndex, 1);
+                splitAsteroid(asteroidIndex);
                 
                 // Break since bullet is destroyed
                 break;
@@ -439,11 +443,6 @@ function checkCollisions() {
     
     // Ship-asteroid collisions (ship is at center 0,0)
     for (let i = asteroids.length - 1; i >= 0; i--) {
-        // Make sure asteroid still exists
-        if (i >= asteroids.length) {
-            continue;
-        }
-        
         const asteroid = asteroids[i];
         
         if (distance(0, 0, asteroid.x, asteroid.y) < ship.radius + asteroid.radius) {
