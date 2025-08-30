@@ -42,10 +42,12 @@ function init() {
     resizeCanvas();
     setupEventListeners();
     loadHighScore();
-    gameLoop();
     
     // Ensure game doesn't start automatically
     gameStarted = false;
+    gameOver = false;
+    
+    gameLoop();
 }
 
 // Load high score from localStorage
@@ -71,8 +73,11 @@ function setupEventListeners() {
     // Start button
     startButton.addEventListener('click', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         console.log('Start button clicked');
-        startScreen.style.display = 'none';
+        if (startScreen) {
+            startScreen.style.display = 'none';
+        }
         gameStarted = true;
         resetGame();
     });
@@ -80,10 +85,15 @@ function setupEventListeners() {
     // Restart button
     restartButton.addEventListener('click', (e) => {
         e.preventDefault();
+        e.stopPropagation();
         console.log('Restart button clicked');
-        gameOverScreen.classList.remove('show');
-        // Also hide explicitly to ensure it's hidden
-        gameOverScreen.style.display = 'none';
+        if (gameOverScreen) {
+            gameOverScreen.classList.remove('show');
+            // Also hide explicitly to ensure it's hidden
+            gameOverScreen.style.display = 'none';
+        }
+        gameStarted = true;
+        gameOver = false;
         resetGame();
     });
     
@@ -145,8 +155,10 @@ function setupEventListeners() {
 // Reset game state
 function resetGame() {
     // Initialize mouse position to center of canvas
-    mouseX = canvas.width / 2;
-    mouseY = canvas.height / 2;
+    if (canvas) {
+        mouseX = canvas.width / 2;
+        mouseY = canvas.height / 2;
+    }
     
     // Create player ship at center
     ship = {
@@ -242,7 +254,7 @@ function gameLoop() {
     }
     render();
     
-    // Continue the game loop even after game over to keep rendering the game over screen
+    // Continue the game loop
     requestAnimationFrame(gameLoop);
 }
 
@@ -270,8 +282,8 @@ function update() {
 // Handle player input
 function handleControls() {
     // Always rotate ship toward mouse/touch position
-    // But ensure we have valid coordinates
-    if (typeof mouseX !== 'undefined' && typeof mouseY !== 'undefined') {
+    // But ensure we have valid coordinates and canvas
+    if (canvas && typeof mouseX !== 'undefined' && typeof mouseY !== 'undefined') {
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
         const dx = mouseX - centerX;
@@ -281,10 +293,15 @@ function handleControls() {
         if (dx !== 0 || dy !== 0) {
             ship.angle = Math.atan2(dy, dx);
         }
+    } else if (canvas) {
+        // Initialize mouse position if not set
+        mouseX = canvas.width / 2;
+        mouseY = canvas.height / 2;
+        ship.angle = 0;
     }
     
-    // Thrust (only if ship is visible)
-    if (thrust && ship.visible) {
+    // Thrust (only if ship is visible and game has started)
+    if (thrust && ship.visible && gameStarted) {
         // Calculate thrust vector
         const thrustX = Math.cos(ship.angle) * ship.acceleration;
         const thrustY = Math.sin(ship.angle) * ship.acceleration;
@@ -304,8 +321,8 @@ function handleControls() {
         createThrustParticles();
     }
     
-    // Automatically shoot at a fixed rate (only if ship is visible)
-    if (ship.shootCooldown <= 0 && ship.visible) {
+    // Automatically shoot at a fixed rate (only if ship is visible and game has started)
+    if (ship.shootCooldown <= 0 && ship.visible && gameStarted) {
         fireBullet();
         ship.shootCooldown = ship.maxShootCooldown;
     }
