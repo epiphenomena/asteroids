@@ -296,7 +296,7 @@ function createThrustParticles() {
     }
 }
 
-// Fire a bullet from the ship
+// Fire a bullet from the ship (ship is always at center of screen)
 function fireBullet() {
     // Calculate bullet starting position (at the nose of the ship)
     const startX = ship.x + Math.cos(ship.angle) * 15;
