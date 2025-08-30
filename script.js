@@ -79,7 +79,9 @@ function setupEventListeners() {
             startScreen.style.display = 'none';
         }
         gameStarted = true;
+        console.log('Calling resetGame from start button');
         resetGame();
+        console.log('resetGame completed. Lives:', lives);
     });
     
     // Restart button
@@ -94,7 +96,9 @@ function setupEventListeners() {
         }
         gameStarted = true;
         gameOver = false;
+        console.log('Calling resetGame from restart button');
         resetGame();
+        console.log('resetGame completed. Lives:', lives);
     });
     
     // Prevent touch events on screens from propagating
@@ -200,6 +204,8 @@ function resetGame() {
     
     // Create initial asteroids
     createAsteroids(5);
+    
+    console.log('Game reset completed. Lives:', lives);
 }
 
 // Create a specified number of asteroids
