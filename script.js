@@ -132,7 +132,9 @@ function resetGame() {
         maxSpeed: 5,
         friction: 0.98,
         shootCooldown: 0,
-        maxShootCooldown: 20 // 50% faster firing rate (30 * 0.67 ≈ 20)
+        maxShootCooldown: 20, // 50% faster firing rate (30 * 0.67 ≈ 20)
+        invincible: false,
+        invincibilityTime: 0
     };
     
     // Reset game state
@@ -323,6 +325,14 @@ function updateShip() {
     ship.velocity.x *= ship.friction;
     ship.velocity.y *= ship.friction;
     
+    // Update invincibility
+    if (ship.invincible) {
+        ship.invincibilityTime--;
+        if (ship.invincibilityTime <= 0) {
+            ship.invincible = false;
+        }
+    }
+    
     // Move the world instead of the ship
     // Update all other objects in the opposite direction of ship movement
     for (const asteroid of asteroids) {
@@ -402,9 +412,6 @@ function updateParticles() {
 
 // Check for collisions between bullets and asteroids, and ship and asteroids
 function checkCollisions() {
-    // Simple approach: process one collision per frame
-    // This avoids complex array manipulation during iteration
-    
     // Check for bullet-asteroid collisions
     for (let i = 0; i < bullets.length; i++) {
         const bullet = bullets[i];
@@ -451,33 +458,38 @@ function checkCollisions() {
         }
     }
     
-    // Check for ship-asteroid collisions
-    for (let i = 0; i < asteroids.length; i++) {
-        const asteroid = asteroids[i];
-        
-        if (distance(0, 0, asteroid.x, asteroid.y) < ship.radius + asteroid.radius) {
-            // Create explosion particles at ship position (center of screen)
-            createExplosion(0, 0);
+    // Check for ship-asteroid collisions (only if ship is not invincible)
+    if (!ship.invincible) {
+        for (let i = 0; i < asteroids.length; i++) {
+            const asteroid = asteroids[i];
             
-            // Lose a life
-            lives--;
-            if (livesValue) livesValue.textContent = lives;
-            
-            // Reset ship velocity to zero
-            ship.velocity.x = 0;
-            ship.velocity.y = 0;
-            
-            // Check for game over
-            if (lives <= 0) {
-                endGame();
-            } else {
-                // Reset ship position to center
-                ship.x = 0;
-                ship.y = 0;
+            if (distance(0, 0, asteroid.x, asteroid.y) < ship.radius + asteroid.radius) {
+                // Create explosion particles at ship position (center of screen)
+                createExplosion(0, 0);
+                
+                // Lose a life
+                lives--;
+                if (livesValue) livesValue.textContent = lives;
+                
+                // Reset ship velocity to zero
+                ship.velocity.x = 0;
+                ship.velocity.y = 0;
+                
+                // Check for game over
+                if (lives <= 0) {
+                    endGame();
+                } else {
+                    // Make ship invincible for 5 seconds (300 frames at 60fps)
+                    ship.invincible = true;
+                    ship.invincibilityTime = 300;
+                    
+                    // Keep ship at the same position where it was hit
+                    // (it's already at 0,0 in our coordinate system)
+                }
+                
+                // Process only one collision per frame
+                return;
             }
-            
-            // Process only one collision per frame
-            return;
         }
     }
 }
@@ -654,7 +666,14 @@ function drawShipAtCenter() {
     ctx.rotate(ship.angle);
     
     // Draw ship as a triangle
-    ctx.strokeStyle = 'white';
+    let strokeStyle = 'white';
+    
+    // If ship is invincible, make it blink
+    if (ship.invincible && Math.floor(ship.invincibilityTime / 5) % 2 === 0) {
+        strokeStyle = 'rgba(255, 255, 255, 0.5)';
+    }
+    
+    ctx.strokeStyle = strokeStyle;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(10, 0); // Nose of the ship
