@@ -369,12 +369,12 @@ function updateAsteroids() {
         asteroid.x += asteroid.velocity.x;
         asteroid.y += asteroid.velocity.y;
         
-        // Screen wrapping relative to ship position
+        // Screen wrapping
         const buffer = 100; // Distance from screen edge
-        const leftEdge = ship.x - canvas.width / 2 - buffer;
-        const rightEdge = ship.x + canvas.width / 2 + buffer;
-        const topEdge = ship.y - canvas.height / 2 - buffer;
-        const bottomEdge = ship.y + canvas.height / 2 + buffer;
+        const leftEdge = - canvas.width / 2 - buffer;
+        const rightEdge = canvas.width / 2 + buffer;
+        const topEdge = - canvas.height / 2 - buffer;
+        const bottomEdge = canvas.height / 2 + buffer;
         
         if (asteroid.x < leftEdge) asteroid.x = rightEdge;
         if (asteroid.x > rightEdge) asteroid.x = leftEdge;
