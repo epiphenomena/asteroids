@@ -402,99 +402,118 @@ function updateParticles() {
 
 // Check for collisions between bullets and asteroids, and ship and asteroids
 function checkCollisions() {
-    // Process one bullet-asteroid collision per frame to avoid array issues
-    processBulletAsteroidCollision();
-    
-    // Ship-asteroid collisions (ship is at center 0,0)
-    processShipAsteroidCollision();
-}
-
-// Process a single bullet-asteroid collision per frame
-function processBulletAsteroidCollision() {
-    for (let i = 0; i < bullets.length; i++) {
-        const bullet = bullets[i];
+    try {
+        // Make copies of the arrays to avoid issues during iteration
+        const bulletsSnapshot = bullets.slice();
+        const asteroidsSnapshot = asteroids.slice();
         
-        for (let j = 0; j < asteroids.length; j++) {
-            const asteroid = asteroids[j];
+        // Bullet-asteroid collisions
+        for (let i = 0; i < bulletsSnapshot.length; i++) {
+            const bullet = bulletsSnapshot[i];
             
-            // Check collision
-            if (distance(bullet.x, bullet.y, asteroid.x, asteroid.y) < bullet.radius + asteroid.radius) {
-                // Create explosion particles
-                createExplosion(asteroid.x, asteroid.y);
+            // Check if bullet still exists
+            const bulletIndex = bullets.indexOf(bullet);
+            if (bulletIndex === -1) continue;
+            
+            for (let j = 0; j < asteroidsSnapshot.length; j++) {
+                const asteroid = asteroidsSnapshot[j];
                 
-                // Increase score
-                score += 10 * asteroid.size;
-                if (scoreValue) scoreValue.textContent = score;
+                // Check if asteroid still exists
+                const asteroidIndex = asteroids.indexOf(asteroid);
+                if (asteroidIndex === -1) continue;
                 
-                // Remove bullet and asteroid
-                bullets.splice(i, 1);
-                asteroids.splice(j, 1);
-                
-                // If asteroid is large enough, split it into smaller ones
-                if (asteroid.size > 1) {
-                    // Create two smaller asteroids
-                    for (let k = 0; k < 2; k++) {
-                        // Add some variance to the angle
-                        const angle = Math.random() * Math.PI * 2;
-                        const speed = Math.random() * 2 + 1;
-                        const velocityX = Math.cos(angle) * speed;
-                        const velocityY = Math.sin(angle) * speed;
+                // Check collision
+                try {
+                    if (distance(bullet.x, bullet.y, asteroid.x, asteroid.y) < bullet.radius + asteroid.radius) {
+                        // Create explosion particles
+                        createExplosion(asteroid.x, asteroid.y);
                         
-                        asteroids.push({
-                            x: asteroid.x,
-                            y: asteroid.y,
-                            radius: (asteroid.size - 1) * 10,
-                            velocity: { x: velocityX, y: velocityY },
-                            size: asteroid.size - 1
-                        });
-                    }
-                }
-                
-                // If all asteroids are destroyed, create a new wave
-                if (asteroids.length === 0) {
-                    setTimeout(() => {
-                        if (asteroids.length === 0 && !gameOver) {
-                            createAsteroids(5);
+                        // Increase score
+                        score += 10 * asteroid.size;
+                        if (scoreValue) scoreValue.textContent = score;
+                        
+                        // Remove bullet and asteroid
+                        bullets.splice(bulletIndex, 1);
+                        asteroids.splice(asteroidIndex, 1);
+                        
+                        // If asteroid is large enough, split it into smaller ones
+                        if (asteroid.size > 1) {
+                            // Create two smaller asteroids
+                            for (let k = 0; k < 2; k++) {
+                                // Add some variance to the angle
+                                const angle = Math.random() * Math.PI * 2;
+                                const speed = Math.random() * 2 + 1;
+                                const velocityX = Math.cos(angle) * speed;
+                                const velocityY = Math.sin(angle) * speed;
+                                
+                                asteroids.push({
+                                    x: asteroid.x,
+                                    y: asteroid.y,
+                                    radius: (asteroid.size - 1) * 10,
+                                    velocity: { x: velocityX, y: velocityY },
+                                    size: asteroid.size - 1
+                                });
+                            }
                         }
-                    }, 100);
+                        
+                        // If all asteroids are destroyed, create a new wave
+                        if (asteroids.length === 0) {
+                            setTimeout(() => {
+                                if (asteroids.length === 0 && !gameOver) {
+                                    createAsteroids(5);
+                                }
+                            }, 100);
+                        }
+                        
+                        // Break since bullet is destroyed
+                        break;
+                    }
+                } catch (e) {
+                    console.error("Error in bullet-asteroid collision check:", e);
                 }
-                
-                // Process only one collision per frame
-                return;
             }
         }
-    }
-}
-
-// Process ship-asteroid collisions
-function processShipAsteroidCollision() {
-    for (let i = asteroids.length - 1; i >= 0; i--) {
-        const asteroid = asteroids[i];
         
-        if (distance(0, 0, asteroid.x, asteroid.y) < ship.radius + asteroid.radius) {
-            // Create explosion particles at ship position (center of screen)
-            createExplosion(0, 0);
+        // Ship-asteroid collisions (ship is at center 0,0)
+        const asteroidsSnapshot2 = asteroids.slice();
+        for (let i = 0; i < asteroidsSnapshot2.length; i++) {
+            const asteroid = asteroidsSnapshot2[i];
             
-            // Lose a life
-            lives--;
-            if (livesValue) livesValue.textContent = lives;
+            // Check if asteroid still exists
+            const asteroidIndex = asteroids.indexOf(asteroid);
+            if (asteroidIndex === -1) continue;
             
-            // Reset ship velocity to zero
-            ship.velocity.x = 0;
-            ship.velocity.y = 0;
-            
-            // Check for game over
-            if (lives <= 0) {
-                endGame();
-            } else {
-                // Reset ship position to center
-                ship.x = 0;
-                ship.y = 0;
+            try {
+                if (distance(0, 0, asteroid.x, asteroid.y) < ship.radius + asteroid.radius) {
+                    // Create explosion particles at ship position (center of screen)
+                    createExplosion(0, 0);
+                    
+                    // Lose a life
+                    lives--;
+                    if (livesValue) livesValue.textContent = lives;
+                    
+                    // Reset ship velocity to zero
+                    ship.velocity.x = 0;
+                    ship.velocity.y = 0;
+                    
+                    // Check for game over
+                    if (lives <= 0) {
+                        endGame();
+                    } else {
+                        // Reset ship position to center
+                        ship.x = 0;
+                        ship.y = 0;
+                    }
+                    
+                    // Process only one collision per frame
+                    break;
+                }
+            } catch (e) {
+                console.error("Error in ship-asteroid collision check:", e);
             }
-            
-            // Process only one collision per frame
-            return;
         }
+    } catch (e) {
+        console.error("Error in checkCollisions:", e);
     }
 }
 
