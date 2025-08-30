@@ -60,30 +60,6 @@ body, html {
     font-size: 20px;
 }
 
-#controls {
-    position: fixed;
-    bottom: 20px;
-    width: 100%;
-    display: flex;
-    justify-content: space-around;
-    padding: 10px 0;
-    box-sizing: border-box;
-    z-index: 5;
-    display: none;
-}
-
-#controls button {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    border: 2px solid #fff;
-    background-color: rgba(0, 0, 0, 0.5);
-    color: white;
-    font-size: 20px;
-    cursor: pointer;
-    touch-action: manipulation; /* Better touch response */
-}
-
 #gameOverScreen {
     position: fixed;
     top: 0;
