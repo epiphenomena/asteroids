@@ -317,18 +317,28 @@ function fireBullet() {
     });
 }
 
-// Update ship position and handle wrapping
+// Update ship position (keep at center) and apply friction to velocity
 function updateShip() {
     // Apply friction
     ship.velocity.x *= ship.friction;
     ship.velocity.y *= ship.friction;
     
-    // Update position
-    ship.x += ship.velocity.x;
-    ship.y += ship.velocity.y;
+    // Move the world instead of the ship
+    // Update all other objects in the opposite direction of ship movement
+    for (const asteroid of asteroids) {
+        asteroid.x -= ship.velocity.x;
+        asteroid.y -= ship.velocity.y;
+    }
     
-    // Screen wrapping
-    wrapAroundScreen(ship);
+    for (const bullet of bullets) {
+        bullet.x -= ship.velocity.x;
+        bullet.y -= ship.velocity.y;
+    }
+    
+    for (const particle of particles) {
+        particle.x -= ship.velocity.x;
+        particle.y -= ship.velocity.y;
+    }
 }
 
 // Update bullet positions and remove off-screen bullets
