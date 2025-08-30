@@ -5,8 +5,12 @@ const startScreen = document.getElementById('startScreen');
 const startButton = document.getElementById('startButton');
 const gameOverScreen = document.getElementById('gameOverScreen');
 const finalScoreElement = document.getElementById('finalScore');
+const finalHighScoreElement = document.getElementById('finalHighScore');
 const restartButton = document.getElementById('restartButton');
 const controls = document.getElementById('controls');
+const scoreValue = document.getElementById('scoreValue');
+const livesValue = document.getElementById('livesValue');
+const highScoreValue = document.getElementById('highScoreValue');
 
 // Control buttons
 const rotateLeftBtn = document.getElementById('rotateLeft');
@@ -20,6 +24,8 @@ let asteroids = [];
 let bullets = [];
 let particles = [];
 let score = 0;
+let lives = 3;
+let highScore = 0;
 let gameOver = false;
 let gameStarted = false;
 
@@ -39,7 +45,26 @@ function resizeCanvas() {
 function init() {
     resizeCanvas();
     setupEventListeners();
+    loadHighScore();
     gameLoop();
+}
+
+// Load high score from localStorage
+function loadHighScore() {
+    const savedHighScore = localStorage.getItem('asteroidsHighScore');
+    if (savedHighScore) {
+        highScore = parseInt(savedHighScore);
+        if (highScoreValue) highScoreValue.textContent = highScore;
+    }
+}
+
+// Save high score to localStorage
+function saveHighScore() {
+    if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('asteroidsHighScore', highScore.toString());
+        if (highScoreValue) highScoreValue.textContent = highScore;
+    }
 }
 
 // Setup event listeners
@@ -151,7 +176,12 @@ function resetGame() {
     bullets = [];
     particles = [];
     score = 0;
+    lives = 3;
     gameOver = false;
+    
+    // Update UI
+    if (scoreValue) scoreValue.textContent = score;
+    if (livesValue) livesValue.textContent = lives;
     
     // Create initial asteroids
     createAsteroids(5);
@@ -404,6 +434,7 @@ function checkCollisions() {
                 
                 // Increase score
                 score += 10 * asteroid.size;
+                if (scoreValue) scoreValue.textContent = score;
                 
                 // Break since bullet is destroyed
                 break;
@@ -418,8 +449,21 @@ function checkCollisions() {
             // Create explosion particles
             createExplosion(ship.x, ship.y);
             
-            // Game over
-            endGame();
+            // Lose a life
+            lives--;
+            if (livesValue) livesValue.textContent = lives;
+            
+            // Reset ship position
+            ship.x = canvas.width / 2;
+            ship.y = canvas.height / 2;
+            ship.velocity.x = 0;
+            ship.velocity.y = 0;
+            
+            // Check for game over
+            if (lives <= 0) {
+                endGame();
+            }
+            
             break;
         }
     }
@@ -513,9 +557,6 @@ function render() {
         
         // Draw asteroids
         drawAsteroids();
-        
-        // Draw score
-        drawScore();
     }
 }
 
@@ -571,20 +612,14 @@ function drawParticles() {
     }
 }
 
-// Draw the current score
-function drawScore() {
-    ctx.fillStyle = 'white';
-    ctx.font = '20px Arial';
-    ctx.textAlign = 'left';
-    ctx.fillText(`Score: ${score}`, 20, 30);
-}
-
 // End the game
 function endGame() {
     gameOver = true;
-    finalScoreElement.textContent = score;
-    gameOverScreen.style.display = 'flex';
-    controls.style.display = 'none';
+    saveHighScore();
+    if (finalScoreElement) finalScoreElement.textContent = score;
+    if (finalHighScoreElement) finalHighScoreElement.textContent = highScore;
+    if (gameOverScreen) gameOverScreen.style.display = 'flex';
+    if (controls) controls.style.display = 'none';
 }
 
 // Start the game when page loads
