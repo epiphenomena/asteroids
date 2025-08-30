@@ -450,6 +450,7 @@ function checkCollisions() {
                 endGame();
             }
             
+            // Since we're modifying the asteroids array, break to avoid issues
             break;
         }
     }
