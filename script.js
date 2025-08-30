@@ -152,8 +152,6 @@ function setupEventListeners() {
 
 // Reset game state
 function resetGame() {
-    console.log('resetGame called. Initial lives:', lives);
-    
     // Initialize mouse position to center of canvas
     if (canvas) {
         mouseX = canvas.width / 2;
@@ -193,8 +191,6 @@ function resetGame() {
     
     // Create initial asteroids
     createAsteroids(5);
-    
-    console.log('resetGame completed. Lives:', lives);
 }
 
 // Create a specified number of asteroids
@@ -208,7 +204,6 @@ function createAsteroids(count) {
 function createAsteroid(size = 3, x = null, y = null) {
     // If position not specified, create at random edge relative to ship position
     if (x === null || y === null) {
-        console.log('Canvas dimensions:', canvas.width, canvas.height);
         const side = Math.floor(Math.random() * 4);
         const buffer = 200; // Increased distance from screen edge to prevent immediate collisions
         
@@ -230,8 +225,6 @@ function createAsteroid(size = 3, x = null, y = null) {
                 y = (Math.random() * canvas.height - canvas.height / 2);
                 break;
         }
-        
-        console.log('Creating asteroid at:', x, y, 'Buffer:', buffer);
     }
     
     // Random velocity
@@ -547,25 +540,12 @@ function checkCollisions() {
         for (let i = 0; i < asteroids.length; i++) {
             const asteroid = asteroids[i];
             
-            const distanceToAsteroid = distance(0, 0, asteroid.x, asteroid.y);
-            const collisionDistance = ship.radius + asteroid.radius;
-            
-            if (distanceToAsteroid < collisionDistance) {
-                console.log('Ship-asteroid collision detected!');
-                console.log('  Distance:', distanceToAsteroid);
-                console.log('  Collision threshold:', collisionDistance);
-                console.log('  Asteroid position:', asteroid.x, asteroid.y);
-                console.log('  Ship position: 0, 0');
-                console.log('  Ship radius:', ship.radius);
-                console.log('  Asteroid radius:', asteroid.radius);
-                
+            if (distance(0, 0, asteroid.x, asteroid.y) < ship.radius + asteroid.radius) {
                 // Create explosion particles at ship position (center of screen)
                 createExplosion(0, 0);
                 
                 // Lose a life
-                console.log('Losing a life. Current lives:', lives);
                 lives--;
-                console.log('Life lost. New lives:', lives);
                 if (livesValue) livesValue.textContent = lives;
                 
                 // Reset ship velocity to zero
@@ -573,12 +553,9 @@ function checkCollisions() {
                 ship.velocity.y = 0;
                 
                 // Check for game over
-                console.log('Checking game over. Lives:', lives);
                 if (lives <= 0) {
-                    console.log('Game over condition met. Calling endGame()');
                     endGame();
                 } else {
-                    console.log('Lives remaining:', lives);
                     // Make ship invisible for 2 seconds (120 frames at 60fps)
                     ship.visible = false;
                     ship.respawnTime = 120;
