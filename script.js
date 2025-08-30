@@ -128,11 +128,11 @@ function resetGame() {
         angle: 0, // In radians
         velocity: { x: 0, y: 0 },
         rotationSpeed: 0.05,
-        acceleration: 0.5,
+        acceleration: 0.65, // 30% faster acceleration (0.5 * 1.3 = 0.65)
         maxSpeed: 5,
         friction: 0.98,
         shootCooldown: 0,
-        maxShootCooldown: 30 // Slower firing rate
+        maxShootCooldown: 20 // 50% faster firing rate (30 * 0.67 ≈ 20)
     };
     
     // Reset game state
