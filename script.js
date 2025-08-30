@@ -255,6 +255,9 @@ function createAsteroid(size = 3, x = null, y = null) {
 function gameLoop() {
     if (gameStarted && !gameOver) {
         update();
+    } else if (gameStarted) {
+        // Even when game is over, still handle controls for ship rotation
+        handleControls();
     }
     render();
     
@@ -305,7 +308,7 @@ function handleControls() {
     }
     
     // Thrust (only if ship is visible and game has started)
-    if (thrust && ship.visible && gameStarted && !gameOver) {
+    if (thrust && ship.visible && gameStarted) {
         console.log('Applying thrust: angle=', ship.angle, 'thrust=', thrust);
         // Calculate thrust vector
         const thrustX = Math.cos(ship.angle) * ship.acceleration;
@@ -327,7 +330,7 @@ function handleControls() {
     }
     
     // Automatically shoot at a fixed rate (only if ship is visible and game has started)
-    if (ship.shootCooldown <= 0 && ship.visible && gameStarted && !gameOver) {
+    if (ship.shootCooldown <= 0 && ship.visible && gameStarted) {
         fireBullet();
         ship.shootCooldown = ship.maxShootCooldown;
     }
