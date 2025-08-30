@@ -108,20 +108,24 @@ function setupEventListeners() {
     
     // Mouse/Touch controls
     canvas.addEventListener('mousedown', (e) => {
+        console.log('MouseDown event');
         thrust = true;
     });
     
     canvas.addEventListener('mouseup', () => {
+        console.log('MouseUp event');
         thrust = false;
     });
     
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
+        console.log('TouchStart event');
         thrust = true;
     });
     
     canvas.addEventListener('touchend', (e) => {
         e.preventDefault();
+        console.log('TouchEnd event');
         thrust = false;
     });
     
@@ -301,7 +305,8 @@ function handleControls() {
     }
     
     // Thrust (only if ship is visible and game has started)
-    if (thrust && ship.visible && gameStarted) {
+    if (thrust && ship.visible && gameStarted && !gameOver) {
+        console.log('Applying thrust: angle=', ship.angle, 'thrust=', thrust);
         // Calculate thrust vector
         const thrustX = Math.cos(ship.angle) * ship.acceleration;
         const thrustY = Math.sin(ship.angle) * ship.acceleration;
@@ -322,7 +327,7 @@ function handleControls() {
     }
     
     // Automatically shoot at a fixed rate (only if ship is visible and game has started)
-    if (ship.shootCooldown <= 0 && ship.visible && gameStarted) {
+    if (ship.shootCooldown <= 0 && ship.visible && gameStarted && !gameOver) {
         fireBullet();
         ship.shootCooldown = ship.maxShootCooldown;
     }
