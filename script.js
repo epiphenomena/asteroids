@@ -7,16 +7,9 @@ const gameOverScreen = document.getElementById('gameOverScreen');
 const finalScoreElement = document.getElementById('finalScore');
 const finalHighScoreElement = document.getElementById('finalHighScore');
 const restartButton = document.getElementById('restartButton');
-const controls = document.getElementById('controls');
 const scoreValue = document.getElementById('scoreValue');
 const livesValue = document.getElementById('livesValue');
 const highScoreValue = document.getElementById('highScoreValue');
-
-// Control buttons
-const rotateLeftBtn = document.getElementById('rotateLeft');
-const rotateRightBtn = document.getElementById('rotateRight');
-const thrustBtn = document.getElementById('thrust');
-const shootBtn = document.getElementById('shoot');
 
 // Game state
 let ship;
@@ -30,10 +23,9 @@ let gameOver = false;
 let gameStarted = false;
 
 // Input state
-let rotateLeft = false;
-let rotateRight = false;
 let thrust = false;
-let shoot = false;
+let mouseX = 0;
+let mouseY = 0;
 
 // Set canvas dimensions to match window
 function resizeCanvas() {
