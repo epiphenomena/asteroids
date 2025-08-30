@@ -208,6 +208,7 @@ function createAsteroids(count) {
 function createAsteroid(size = 3, x = null, y = null) {
     // If position not specified, create at random edge relative to ship position
     if (x === null || y === null) {
+        console.log('Canvas dimensions:', canvas.width, canvas.height);
         const side = Math.floor(Math.random() * 4);
         const buffer = 200; // Increased distance from screen edge to prevent immediate collisions
         
@@ -546,7 +547,18 @@ function checkCollisions() {
         for (let i = 0; i < asteroids.length; i++) {
             const asteroid = asteroids[i];
             
-            if (distance(0, 0, asteroid.x, asteroid.y) < ship.radius + asteroid.radius) {
+            const distanceToAsteroid = distance(0, 0, asteroid.x, asteroid.y);
+            const collisionDistance = ship.radius + asteroid.radius;
+            
+            if (distanceToAsteroid < collisionDistance) {
+                console.log('Ship-asteroid collision detected!');
+                console.log('  Distance:', distanceToAsteroid);
+                console.log('  Collision threshold:', collisionDistance);
+                console.log('  Asteroid position:', asteroid.x, asteroid.y);
+                console.log('  Ship position: 0, 0');
+                console.log('  Ship radius:', ship.radius);
+                console.log('  Asteroid radius:', asteroid.radius);
+                
                 // Create explosion particles at ship position (center of screen)
                 createExplosion(0, 0);
                 
