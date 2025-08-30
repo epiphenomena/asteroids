@@ -429,23 +429,41 @@ function checkCollisions() {
         }
     }
     
-    // Ship-asteroid collisions
+    // Ship-asteroid collisions (ship is at center 0,0)
     for (let i = asteroids.length - 1; i >= 0; i--) {
         const asteroid = asteroids[i];
         
-        if (distance(ship.x, ship.y, asteroid.x, asteroid.y) < ship.radius + asteroid.radius) {
-            // Create explosion particles at ship position
-            createExplosion(ship.x, ship.y);
+        if (distance(0, 0, asteroid.x, asteroid.y) < ship.radius + asteroid.radius) {
+            // Create explosion particles at ship position (center of screen)
+            createExplosion(0, 0);
             
             // Lose a life
             lives--;
             if (livesValue) livesValue.textContent = lives;
             
-            // Reset ship position to center and velocity to zero
-            ship.x = canvas.width / 2;
-            ship.y = canvas.height / 2;
+            // Reset ship velocity to zero
             ship.velocity.x = 0;
             ship.velocity.y = 0;
+            
+            // Reset all objects positions to maintain ship at center
+            for (const asteroid of asteroids) {
+                asteroid.x -= ship.x;
+                asteroid.y -= ship.y;
+            }
+            
+            for (const bullet of bullets) {
+                bullet.x -= ship.x;
+                bullet.y -= ship.y;
+            }
+            
+            for (const particle of particles) {
+                particle.x -= ship.x;
+                particle.y -= ship.y;
+            }
+            
+            // Reset ship position
+            ship.x = 0;
+            ship.y = 0;
             
             // Check for game over
             if (lives <= 0) {
