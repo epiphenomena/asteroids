@@ -400,19 +400,13 @@ function checkCollisions() {
         for (let j = asteroids.length - 1; j >= 0; j--) {
             const asteroid = asteroids[j];
             
-            // Adjust positions for ship-centered view
-            const bulletX = bullet.x + (canvas.width / 2 - ship.x);
-            const bulletY = bullet.y + (canvas.height / 2 - ship.y);
-            const asteroidX = asteroid.x + (canvas.width / 2 - ship.x);
-            const asteroidY = asteroid.y + (canvas.height / 2 - ship.y);
-            
             // Check collision
-            if (distance(bulletX, bulletY, asteroidX, asteroidY) < bullet.radius + asteroid.radius) {
+            if (distance(bullet.x, bullet.y, asteroid.x, asteroid.y) < bullet.radius + asteroid.radius) {
                 // Remove bullet
                 bullets.splice(i, 1);
                 
                 // Create explosion particles
-                createExplosion(asteroidX, asteroidY);
+                createExplosion(asteroid.x, asteroid.y);
                 
                 // Split asteroid or remove it
                 splitAsteroid(j);
@@ -427,22 +421,19 @@ function checkCollisions() {
         }
     }
     
-    // Ship-asteroid collisions (ship is always at center)
+    // Ship-asteroid collisions
     for (let i = asteroids.length - 1; i >= 0; i--) {
         const asteroid = asteroids[i];
-        // Adjust asteroid position for ship-centered view
-        const asteroidX = asteroid.x + (canvas.width / 2 - ship.x);
-        const asteroidY = asteroid.y + (canvas.height / 2 - ship.y);
         
-        if (distance(canvas.width / 2, canvas.height / 2, asteroidX, asteroidY) < ship.radius + asteroid.radius) {
-            // Create explosion particles at ship position (center of screen)
-            createExplosion(canvas.width / 2, canvas.height / 2);
+        if (distance(ship.x, ship.y, asteroid.x, asteroid.y) < ship.radius + asteroid.radius) {
+            // Create explosion particles at ship position
+            createExplosion(ship.x, ship.y);
             
             // Lose a life
             lives--;
             if (livesValue) livesValue.textContent = lives;
             
-            // Reset ship position and velocity
+            // Reset ship velocity
             ship.velocity.x = 0;
             ship.velocity.y = 0;
             
