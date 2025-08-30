@@ -577,21 +577,16 @@ function drawParticles() {
 
 // Draw all bullets
 function drawBullets() {
-    // Save the context
-    ctx.save();
-    
-    // Translate the context so the ship is always at the center of the screen
-    ctx.translate(canvas.width / 2 - ship.x, canvas.height / 2 - ship.y);
-    
     ctx.fillStyle = 'white';
     for (const bullet of bullets) {
+        // Calculate screen position relative to ship
+        const screenX = bullet.x - ship.x + canvas.width / 2;
+        const screenY = bullet.y - ship.y + canvas.height / 2;
+        
         ctx.beginPath();
-        ctx.arc(bullet.x, bullet.y, bullet.radius, 0, Math.PI * 2);
+        ctx.arc(screenX, screenY, bullet.radius, 0, Math.PI * 2);
         ctx.fill();
     }
-    
-    // Restore the context
-    ctx.restore();
 }
 
 // Draw all asteroids
