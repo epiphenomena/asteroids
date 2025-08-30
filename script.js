@@ -402,25 +402,13 @@ function updateParticles() {
 
 // Check for collisions between bullets and asteroids, and ship and asteroids
 function checkCollisions() {
-    // Create a copy of the arrays to avoid issues with modifying them during iteration
-    const bulletsCopy = [...bullets];
-    const asteroidsCopy = [...asteroids];
-    
     // Bullet-asteroid collisions
-    for (let i = bulletsCopy.length - 1; i >= 0; i--) {
-        const bullet = bulletsCopy[i];
-        let bulletHit = false;
+    let bulletHit = false;
+    for (let i = 0; i < bullets.length && !bulletHit; i++) {
+        const bullet = bullets[i];
         
-        for (let j = asteroidsCopy.length - 1; j >= 0; j--) {
-            const asteroid = asteroidsCopy[j];
-            
-            // Check if both bullet and asteroid still exist in the original arrays
-            const bulletIndex = bullets.indexOf(bullet);
-            const asteroidIndex = asteroids.indexOf(asteroid);
-            
-            if (bulletIndex === -1 || asteroidIndex === -1) {
-                continue;
-            }
+        for (let j = 0; j < asteroids.length && !bulletHit; j++) {
+            const asteroid = asteroids[j];
             
             // Check collision
             if (distance(bullet.x, bullet.y, asteroid.x, asteroid.y) < bullet.radius + asteroid.radius) {
@@ -431,11 +419,41 @@ function checkCollisions() {
                 score += 10 * asteroid.size;
                 if (scoreValue) scoreValue.textContent = score;
                 
-                // Remove bullet and asteroid from original arrays
-                bullets.splice(bulletIndex, 1);
-                splitAsteroid(asteroidIndex);
+                // Remove bullet and asteroid
+                bullets.splice(i, 1);
+                asteroids.splice(j, 1);
                 
-                // Break since bullet is destroyed
+                // If asteroid is large enough, split it into smaller ones
+                if (asteroid.size > 1) {
+                    // Create two smaller asteroids
+                    for (let k = 0; k < 2; k++) {
+                        // Add some variance to the angle
+                        const angle = Math.random() * Math.PI * 2;
+                        const speed = Math.random() * 2 + 1;
+                        const velocityX = Math.cos(angle) * speed;
+                        const velocityY = Math.sin(angle) * speed;
+                        
+                        asteroids.push({
+                            x: asteroid.x,
+                            y: asteroid.y,
+                            radius: (asteroid.size - 1) * 10,
+                            velocity: { x: velocityX, y: velocityY },
+                            size: asteroid.size - 1
+                        });
+                    }
+                }
+                
+                // If all asteroids are destroyed, create a new wave
+                if (asteroids.length === 0) {
+                    setTimeout(() => {
+                        if (asteroids.length === 0 && !gameOver) {
+                            createAsteroids(5);
+                        }
+                    }, 100);
+                }
+                
+                // Mark that we had a collision
+                bulletHit = true;
                 break;
             }
         }
