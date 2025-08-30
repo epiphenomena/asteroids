@@ -402,12 +402,19 @@ function updateParticles() {
 
 // Check for collisions between bullets and asteroids, and ship and asteroids
 function checkCollisions() {
-    // Bullet-asteroid collisions
-    let bulletHit = false;
-    for (let i = 0; i < bullets.length && !bulletHit; i++) {
+    // Process one bullet-asteroid collision per frame to avoid array issues
+    processBulletAsteroidCollision();
+    
+    // Ship-asteroid collisions (ship is at center 0,0)
+    processShipAsteroidCollision();
+}
+
+// Process a single bullet-asteroid collision per frame
+function processBulletAsteroidCollision() {
+    for (let i = 0; i < bullets.length; i++) {
         const bullet = bullets[i];
         
-        for (let j = 0; j < asteroids.length && !bulletHit; j++) {
+        for (let j = 0; j < asteroids.length; j++) {
             const asteroid = asteroids[j];
             
             // Check collision
@@ -452,14 +459,15 @@ function checkCollisions() {
                     }, 100);
                 }
                 
-                // Mark that we had a collision
-                bulletHit = true;
-                break;
+                // Process only one collision per frame
+                return;
             }
         }
     }
-    
-    // Ship-asteroid collisions (ship is at center 0,0)
+}
+
+// Process ship-asteroid collisions
+function processShipAsteroidCollision() {
     for (let i = asteroids.length - 1; i >= 0; i--) {
         const asteroid = asteroids[i];
         
@@ -484,8 +492,8 @@ function checkCollisions() {
                 ship.y = 0;
             }
             
-            // Since we're modifying the asteroids array, break to avoid issues
-            break;
+            // Process only one collision per frame
+            return;
         }
     }
 }
