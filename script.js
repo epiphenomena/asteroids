@@ -322,8 +322,8 @@ function handleControls() {
         createThrustParticles();
     }
     
-    // Automatically shoot at a fixed rate (only if ship is visible and game has started)
-    if (ship.shootCooldown <= 0 && ship.visible && gameStarted) {
+    // Automatically shoot at a fixed rate (only if ship is visible, game has started, and ship is not invincible)
+    if (ship.shootCooldown <= 0 && ship.visible && gameStarted && !ship.invincible) {
         fireBullet();
         ship.shootCooldown = ship.maxShootCooldown;
     }
