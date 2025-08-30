@@ -512,6 +512,22 @@ function checkCollisions() {
                     // Reset ship position to center
                     ship.x = 0;
                     ship.y = 0;
+                    
+                    // Move all objects to maintain ship at center
+                    for (let i = asteroids.length - 1; i >= 0; i--) {
+                        asteroids[i].x -= ship.x;
+                        asteroids[i].y -= ship.y;
+                    }
+                    
+                    for (let i = bullets.length - 1; i >= 0; i--) {
+                        bullets[i].x -= ship.x;
+                        bullets[i].y -= ship.y;
+                    }
+                    
+                    for (let i = particles.length - 1; i >= 0; i--) {
+                        particles[i].x -= ship.x;
+                        particles[i].y -= ship.y;
+                    }
                 }
             }
         }
