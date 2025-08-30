@@ -501,25 +501,9 @@ function checkCollisions() {
                 if (lives <= 0) {
                     endGame();
                 } else {
-                    // Reset ship position to center
+                    // Reset ship position to center (but don't modify other objects here)
                     ship.x = 0;
                     ship.y = 0;
-                    
-                    // Move all objects to maintain ship at center
-                    for (let j = asteroids.length - 1; j >= 0; j--) {
-                        asteroids[j].x -= ship.x;
-                        asteroids[j].y -= ship.y;
-                    }
-                    
-                    for (let j = bullets.length - 1; j >= 0; j--) {
-                        bullets[j].x -= ship.x;
-                        bullets[j].y -= ship.y;
-                    }
-                    
-                    for (let j = particles.length - 1; j >= 0; j--) {
-                        particles[j].x -= ship.x;
-                        particles[j].y -= ship.y;
-                    }
                 }
                 
                 break; // Ship can only collide with one asteroid per frame
