@@ -445,26 +445,6 @@ function checkCollisions() {
             ship.velocity.x = 0;
             ship.velocity.y = 0;
             
-            // Reset all objects positions to maintain ship at center
-            for (const asteroid of asteroids) {
-                asteroid.x -= ship.x;
-                asteroid.y -= ship.y;
-            }
-            
-            for (const bullet of bullets) {
-                bullet.x -= ship.x;
-                bullet.y -= ship.y;
-            }
-            
-            for (const particle of particles) {
-                particle.x -= ship.x;
-                particle.y -= ship.y;
-            }
-            
-            // Reset ship position
-            ship.x = 0;
-            ship.y = 0;
-            
             // Check for game over
             if (lives <= 0) {
                 endGame();
