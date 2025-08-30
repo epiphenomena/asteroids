@@ -167,20 +167,20 @@ function createAsteroid(size = 3, x = null, y = null) {
         
         switch (side) {
             case 0: // Top
-                x = ship.x + (Math.random() * canvas.width - canvas.width / 2);
-                y = ship.y - canvas.height / 2 - buffer;
+                x = (Math.random() * canvas.width - canvas.width / 2);
+                y = - canvas.height / 2 - buffer;
                 break;
             case 1: // Right
-                x = ship.x + canvas.width / 2 + buffer;
-                y = ship.y + (Math.random() * canvas.height - canvas.height / 2);
+                x = canvas.width / 2 + buffer;
+                y = (Math.random() * canvas.height - canvas.height / 2);
                 break;
             case 2: // Bottom
-                x = ship.x + (Math.random() * canvas.width - canvas.width / 2);
-                y = ship.y + canvas.height / 2 + buffer;
+                x = (Math.random() * canvas.width - canvas.width / 2);
+                y = canvas.height / 2 + buffer;
                 break;
             case 3: // Left
-                x = ship.x - canvas.width / 2 - buffer;
-                y = ship.y + (Math.random() * canvas.height - canvas.height / 2);
+                x = - canvas.width / 2 - buffer;
+                y = (Math.random() * canvas.height - canvas.height / 2);
                 break;
         }
     }
