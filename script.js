@@ -70,7 +70,7 @@ function setupEventListeners() {
     
     // Restart button
     restartButton.addEventListener('click', () => {
-        gameOverScreen.style.display = 'none';
+        gameOverScreen.classList.remove('show');
         resetGame();
     });
     
@@ -691,8 +691,7 @@ function endGame() {
     saveHighScore();
     if (finalScoreElement) finalScoreElement.textContent = score;
     if (finalHighScoreElement) finalHighScoreElement.textContent = highScore;
-    if (gameOverScreen) gameOverScreen.style.display = 'flex';
-    if (controls) controls.style.display = 'none';
+    if (gameOverScreen) gameOverScreen.classList.add('show');
 }
 
 // Start the game when page loads
