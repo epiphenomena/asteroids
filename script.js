@@ -351,8 +351,17 @@ function updateAsteroids() {
         asteroid.x += asteroid.velocity.x;
         asteroid.y += asteroid.velocity.y;
         
-        // Screen wrapping
-        wrapAroundScreen(asteroid);
+        // Screen wrapping relative to ship position
+        const buffer = 100; // Distance from screen edge
+        const leftEdge = ship.x - canvas.width / 2 - buffer;
+        const rightEdge = ship.x + canvas.width / 2 + buffer;
+        const topEdge = ship.y - canvas.height / 2 - buffer;
+        const bottomEdge = ship.y + canvas.height / 2 + buffer;
+        
+        if (asteroid.x < leftEdge) asteroid.x = rightEdge;
+        if (asteroid.x > rightEdge) asteroid.x = leftEdge;
+        if (asteroid.y < topEdge) asteroid.y = bottomEdge;
+        if (asteroid.y > bottomEdge) asteroid.y = topEdge;
     }
 }
 
