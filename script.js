@@ -433,7 +433,9 @@ function checkCollisions() {
             lives--;
             if (livesValue) livesValue.textContent = lives;
             
-            // Reset ship velocity
+            // Reset ship position to center and velocity to zero
+            ship.x = canvas.width / 2;
+            ship.y = canvas.height / 2;
             ship.velocity.x = 0;
             ship.velocity.y = 0;
             
