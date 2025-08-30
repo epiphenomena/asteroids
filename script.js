@@ -71,6 +71,8 @@ function setupEventListeners() {
     // Restart button
     restartButton.addEventListener('click', () => {
         gameOverScreen.classList.remove('show');
+        // Also hide explicitly to ensure it's hidden
+        gameOverScreen.style.display = 'none';
         resetGame();
     });
     
@@ -714,6 +716,8 @@ function endGame() {
     if (gameOverScreen) {
         console.log('Showing game over screen');
         gameOverScreen.classList.add('show');
+        // Also set display explicitly to ensure visibility
+        gameOverScreen.style.display = 'flex';
     } else {
         console.log('gameOverScreen element not found');
     }
