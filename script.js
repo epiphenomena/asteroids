@@ -352,9 +352,7 @@ function updateBullets() {
         
         // Remove bullets that go off-screen or exceed lifetime
         // Check if bullet is too far from ship
-        const dx = bullet.x - ship.x;
-        const dy = bullet.y - ship.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        const distance = Math.sqrt(bullet.x * bullet.x + bullet.y * bullet.y);
         
         if (distance > Math.max(canvas.width, canvas.height) || ++bullet.age > bullet.maxAge) {
             bullets.splice(i, 1);
