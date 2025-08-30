@@ -209,7 +209,7 @@ function createAsteroid(size = 3, x = null, y = null) {
     // If position not specified, create at random edge relative to ship position
     if (x === null || y === null) {
         const side = Math.floor(Math.random() * 4);
-        const buffer = 100; // Distance from screen edge
+        const buffer = 200; // Increased distance from screen edge to prevent immediate collisions
         
         switch (side) {
             case 0: // Top
@@ -229,6 +229,8 @@ function createAsteroid(size = 3, x = null, y = null) {
                 y = (Math.random() * canvas.height - canvas.height / 2);
                 break;
         }
+        
+        console.log('Creating asteroid at:', x, y, 'Buffer:', buffer);
     }
     
     // Random velocity
