@@ -152,6 +152,8 @@ function setupEventListeners() {
 
 // Reset game state
 function resetGame() {
+    console.log('resetGame called. Initial lives:', lives);
+    
     // Initialize mouse position to center of canvas
     if (canvas) {
         mouseX = canvas.width / 2;
@@ -191,6 +193,8 @@ function resetGame() {
     
     // Create initial asteroids
     createAsteroids(5);
+    
+    console.log('resetGame completed. Lives:', lives);
 }
 
 // Create a specified number of asteroids
@@ -545,7 +549,9 @@ function checkCollisions() {
                 createExplosion(0, 0);
                 
                 // Lose a life
+                console.log('Losing a life. Current lives:', lives);
                 lives--;
+                console.log('Life lost. New lives:', lives);
                 if (livesValue) livesValue.textContent = lives;
                 
                 // Reset ship velocity to zero
@@ -553,9 +559,12 @@ function checkCollisions() {
                 ship.velocity.y = 0;
                 
                 // Check for game over
+                console.log('Checking game over. Lives:', lives);
                 if (lives <= 0) {
+                    console.log('Game over condition met. Calling endGame()');
                     endGame();
                 } else {
+                    console.log('Lives remaining:', lives);
                     // Make ship invisible for 2 seconds (120 frames at 60fps)
                     ship.visible = false;
                     ship.respawnTime = 120;
