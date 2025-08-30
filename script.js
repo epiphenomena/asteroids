@@ -617,6 +617,12 @@ function drawBullets() {
 
 // Draw all asteroids
 function drawAsteroids() {
+    // Save the context
+    ctx.save();
+    
+    // Translate the context so the ship is always at the center of the screen
+    ctx.translate(canvas.width / 2 - ship.x, canvas.height / 2 - ship.y);
+    
     ctx.strokeStyle = 'white';
     ctx.lineWidth = 2;
     for (const asteroid of asteroids) {
@@ -624,6 +630,9 @@ function drawAsteroids() {
         ctx.arc(asteroid.x, asteroid.y, asteroid.radius, 0, Math.PI * 2);
         ctx.stroke();
     }
+    
+    // Restore the context
+    ctx.restore();
 }
 
 // Draw the player ship at the center of the screen
