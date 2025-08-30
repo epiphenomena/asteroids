@@ -120,10 +120,10 @@ function setupEventListeners() {
 
 // Reset game state
 function resetGame() {
-    // Create player ship
+    // Create player ship at center
     ship = {
-        x: canvas.width / 2,
-        y: canvas.height / 2,
+        x: 0,
+        y: 0,
         radius: 10,
         angle: 0, // In radians
         velocity: { x: 0, y: 0 },
