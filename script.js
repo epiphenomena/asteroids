@@ -500,26 +500,6 @@ function checkCollisions() {
                 bullets.splice(i, 1);
                 asteroids.splice(j, 1);
                 
-                // If asteroid is large enough, split it into smaller ones
-                if (asteroid.size > 1) {
-                    // Create two smaller asteroids
-                    for (let k = 0; k < 2; k++) {
-                        // Add some variance to the angle
-                        const angle = Math.random() * Math.PI * 2;
-                        const speed = Math.random() * 2 + 1;
-                        const velocityX = Math.cos(angle) * speed;
-                        const velocityY = Math.sin(angle) * speed;
-                        
-                        asteroids.push({
-                            x: asteroid.x,
-                            y: asteroid.y,
-                            radius: (asteroid.size - 1) * 10,
-                            velocity: { x: velocityX, y: velocityY },
-                            size: asteroid.size - 1
-                        });
-                    }
-                }
-                
                 // If all asteroids are destroyed, create a new wave
                 if (asteroids.length === 0) {
                     setTimeout(() => {
