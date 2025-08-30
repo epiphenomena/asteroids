@@ -71,11 +71,24 @@ body, html {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 10;
+    z-index: 100;
 }
 
 #gameOverScreen.show {
     display: flex;
+}
+
+#gameOverScreen h2 {
+    font-size: 48px;
+    margin-bottom: 20px;
+    color: #fff;
+    text-shadow: 0 0 10px #f00, 0 0 20px #f00, 0 0 30px #f00;
+}
+
+#gameOverScreen p {
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: #fff;
 }
 
 .hidden {

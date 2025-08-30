@@ -239,15 +239,17 @@ function update() {
 
 // Handle player input
 function handleControls() {
-    // Rotate ship toward mouse/touch position
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const dx = mouseX - centerX;
-    const dy = mouseY - centerY;
-    ship.angle = Math.atan2(dy, dx);
+    // Rotate ship toward mouse/touch position (only if ship is visible)
+    if (ship.visible) {
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const dx = mouseX - centerX;
+        const dy = mouseY - centerY;
+        ship.angle = Math.atan2(dy, dx);
+    }
     
-    // Thrust
-    if (thrust) {
+    // Thrust (only if ship is visible)
+    if (thrust && ship.visible) {
         // Calculate thrust vector
         const thrustX = Math.cos(ship.angle) * ship.acceleration;
         const thrustY = Math.sin(ship.angle) * ship.acceleration;
@@ -267,8 +269,8 @@ function handleControls() {
         createThrustParticles();
     }
     
-    // Automatically shoot at a fixed rate
-    if (ship.shootCooldown <= 0) {
+    // Automatically shoot at a fixed rate (only if ship is visible)
+    if (ship.shootCooldown <= 0 && ship.visible) {
         fireBullet();
         ship.shootCooldown = ship.maxShootCooldown;
     }
