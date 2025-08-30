@@ -64,7 +64,6 @@ function setupEventListeners() {
     // Start button
     startButton.addEventListener('click', () => {
         startScreen.style.display = 'none';
-        controls.style.display = 'flex';
         gameStarted = true;
         resetGame();
     });
@@ -72,68 +71,41 @@ function setupEventListeners() {
     // Restart button
     restartButton.addEventListener('click', () => {
         gameOverScreen.style.display = 'none';
-        controls.style.display = 'flex';
         resetGame();
     });
     
-    // Rotate left
-    rotateLeftBtn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        rotateLeft = true;
+    // Mouse/Touch controls
+    canvas.addEventListener('mousedown', (e) => {
+        thrust = true;
     });
     
-    rotateLeftBtn.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        rotateLeft = false;
+    canvas.addEventListener('mouseup', () => {
+        thrust = false;
     });
     
-    rotateLeftBtn.addEventListener('mousedown', () => rotateLeft = true);
-    rotateLeftBtn.addEventListener('mouseup', () => rotateLeft = false);
-    rotateLeftBtn.addEventListener('mouseleave', () => rotateLeft = false);
-    
-    // Rotate right
-    rotateRightBtn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        rotateRight = true;
-    });
-    
-    rotateRightBtn.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        rotateRight = false;
-    });
-    
-    rotateRightBtn.addEventListener('mousedown', () => rotateRight = true);
-    rotateRightBtn.addEventListener('mouseup', () => rotateRight = false);
-    rotateRightBtn.addEventListener('mouseleave', () => rotateRight = false);
-    
-    // Thrust
-    thrustBtn.addEventListener('touchstart', (e) => {
+    canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
         thrust = true;
     });
     
-    thrustBtn.addEventListener('touchend', (e) => {
+    canvas.addEventListener('touchend', (e) => {
         e.preventDefault();
         thrust = false;
     });
     
-    thrustBtn.addEventListener('mousedown', () => thrust = true);
-    thrustBtn.addEventListener('mouseup', () => thrust = false);
-    thrustBtn.addEventListener('mouseleave', () => thrust = false);
-    
-    // Shoot
-    shootBtn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        shoot = true;
+    // Mouse/Touch movement for ship rotation
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        mouseX = e.clientX - rect.left;
+        mouseY = e.clientY - rect.top;
     });
     
-    shootBtn.addEventListener('touchend', (e) => {
+    canvas.addEventListener('touchmove', (e) => {
         e.preventDefault();
-        shoot = false;
+        const rect = canvas.getBoundingClientRect();
+        mouseX = e.touches[0].clientX - rect.left;
+        mouseY = e.touches[0].clientY - rect.top;
     });
-    
-    shootBtn.addEventListener('mousedown', () => shoot = true);
-    shootBtn.addEventListener('mouseup', () => shoot = false);
     
     // Prevent default touch behaviors
     document.addEventListener('touchstart', (e) => {
