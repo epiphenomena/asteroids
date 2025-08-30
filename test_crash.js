@@ -1,4 +1,4 @@
-// Test script to reproduce the crash when ship collides with an asteroid
+// Test script to reproduce the crash when ship collides with an asteroid and test game over screen
 
 // Wait for the page to load
 window.addEventListener('load', function() {
@@ -27,7 +27,9 @@ function runTestSequence() {
     let testInterval;
     let thrustInterval;
     let startTime = Date.now();
-    let testDuration = 30000; // Run test for 30 seconds
+    let testDuration = 60000; // Run test for 60 seconds
+    let livesLost = 0;
+    let gameOverTested = false;
     
     // Start thrusting immediately
     console.log('Starting thrust');
@@ -45,6 +47,8 @@ function runTestSequence() {
         
         // Keep thrusting by periodically sending mouse move events
         thrustInterval = setInterval(function() {
+            if (!canvas) return;
+            
             const mouseMoveEvent = new MouseEvent('mousemove', {
                 view: window,
                 bubbles: true,
@@ -87,19 +91,55 @@ function runTestSequence() {
                 });
                 canvas.dispatchEvent(mouseUpEvent);
             }
+            
+            // Log test results
+            console.log('Test completed. Lives lost:', livesLost);
+            if (gameOverTested) {
+                console.log('Game over screen test: PASSED');
+            } else {
+                console.log('Game over screen test: FAILED - Game over not detected');
+            }
         }
         
         // Check if game is over
         const gameOverScreen = document.getElementById('gameOverScreen');
-        if (gameOverScreen && gameOverScreen.style.display !== 'none') {
-            console.log('Game over detected, stopping test');
-            clearInterval(testInterval);
-            clearInterval(thrustInterval);
-            
-            // Log final score
-            const finalScore = document.getElementById('finalScore');
-            if (finalScore) {
-                console.log('Final score:', finalScore.textContent);
+        if (gameOverScreen) {
+            // Check if game over screen is visible
+            const isGameOverVisible = gameOverScreen.classList.contains('show') || 
+                                    gameOverScreen.style.display === 'flex' ||
+                                    window.getComputedStyle(gameOverScreen).display !== 'none';
+                                    
+            if (isGameOverVisible && !gameOverTested) {
+                console.log('Game over detected, testing game over screen...');
+                gameOverTested = true;
+                
+                // Log final score
+                const finalScore = document.getElementById('finalScore');
+                if (finalScore) {
+                    console.log('Final score:', finalScore.textContent);
+                }
+                
+                // Test restart button
+                const restartButton = document.getElementById('restartButton');
+                if (restartButton) {
+                    console.log('Restart button found, clicking...');
+                    restartButton.click();
+                    
+                    // Check if game over screen is hidden after restart
+                    setTimeout(function() {
+                        const isHidden = !gameOverScreen.classList.contains('show') && 
+                                       gameOverScreen.style.display === 'none';
+                        if (isHidden) {
+                            console.log('Game over screen hidden after restart: PASSED');
+                        } else {
+                            console.log('Game over screen hidden after restart: FAILED');
+                        }
+                    }, 100);
+                }
+                
+                // Stop the test
+                clearInterval(testInterval);
+                clearInterval(thrustInterval);
             }
         }
         
@@ -107,10 +147,17 @@ function runTestSequence() {
         if (elapsed % 5000 < 100) {
             console.log('Test running... Elapsed time:', Math.floor(elapsed / 1000), 'seconds');
             
+            // Log lives
+            const livesValue = document.getElementById('livesValue');
+            if (livesValue) {
+                console.log('Lives:', livesValue.textContent);
+            }
+            
             // Log ship position and velocity
             if (typeof ship !== 'undefined') {
-                console.log('Ship position:', ship.x, ship.y);
-                console.log('Ship velocity:', ship.velocity.x, ship.velocity.y);
+                console.log('Ship visible:', ship.visible);
+                console.log('Ship invincible:', ship.invincible);
+                console.log('Ship respawn time:', ship.respawnTime);
             }
             
             // Log number of asteroids and bullets
@@ -119,6 +166,16 @@ function runTestSequence() {
             }
             if (typeof bullets !== 'undefined') {
                 console.log('Bullets count:', bullets.length);
+            }
+        }
+        
+        // Track lives lost
+        const livesValue = document.getElementById('livesValue');
+        if (livesValue) {
+            const currentLives = parseInt(livesValue.textContent);
+            if (currentLives < 3 - livesLost) {
+                livesLost = 3 - currentLives;
+                console.log('Life lost! Lives remaining:', currentLives);
             }
         }
     }, 100);
