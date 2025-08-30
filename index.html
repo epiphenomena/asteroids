@@ -8,6 +8,11 @@
 </head>
 <body>
     <canvas id="gameCanvas"></canvas>
+    <div id="startScreen">
+        <h1>ASTEROIDS</h1>
+        <p>Destroy asteroids and avoid collisions!</p>
+        <button id="startButton">START GAME</button>
+    </div>
     <div id="controls">
         <button id="rotateLeft">←</button>
         <button id="thrust">↑</button>
@@ -17,7 +22,7 @@
     <div id="gameOverScreen" class="hidden">
         <h2>Game Over</h2>
         <p>Your Score: <span id="finalScore">0</span></p>
-        <button id="restartButton">Restart</button>
+        <button id="restartButton">Play Again</button>
     </div>
     <script src="script.js"></script>
 </body>

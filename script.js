@@ -1,9 +1,12 @@
 // Game variables
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+const startScreen = document.getElementById('startScreen');
+const startButton = document.getElementById('startButton');
 const gameOverScreen = document.getElementById('gameOverScreen');
 const finalScoreElement = document.getElementById('finalScore');
 const restartButton = document.getElementById('restartButton');
+const controls = document.getElementById('controls');
 
 // Control buttons
 const rotateLeftBtn = document.getElementById('rotateLeft');
@@ -15,8 +18,10 @@ const shootBtn = document.getElementById('shoot');
 let ship;
 let asteroids = [];
 let bullets = [];
+let particles = [];
 let score = 0;
 let gameOver = false;
+let gameStarted = false;
 
 // Input state
 let rotateLeft = false;
@@ -33,41 +38,27 @@ function resizeCanvas() {
 // Initialize game
 function init() {
     resizeCanvas();
-    resetGame();
-    setupControls();
+    setupEventListeners();
     gameLoop();
 }
 
-// Reset game state
-function resetGame() {
-    // Create player ship
-    ship = {
-        x: canvas.width / 2,
-        y: canvas.height / 2,
-        radius: 10,
-        angle: 0, // In radians
-        velocity: { x: 0, y: 0 },
-        rotationSpeed: 0.05,
-        acceleration: 0.5,
-        maxSpeed: 5,
-        friction: 0.98,
-        shootCooldown: 0,
-        maxShootCooldown: 10
-    };
+// Setup event listeners
+function setupEventListeners() {
+    // Start button
+    startButton.addEventListener('click', () => {
+        startScreen.style.display = 'none';
+        controls.style.display = 'flex';
+        gameStarted = true;
+        resetGame();
+    });
     
-    // Reset game state
-    asteroids = [];
-    bullets = [];
-    score = 0;
-    gameOver = false;
-    gameOverScreen.classList.add('hidden');
+    // Restart button
+    restartButton.addEventListener('click', () => {
+        gameOverScreen.style.display = 'none';
+        controls.style.display = 'flex';
+        resetGame();
+    });
     
-    // Create initial asteroids
-    createAsteroids(5);
-}
-
-// Setup mobile controls
-function setupControls() {
     // Rotate left
     rotateLeftBtn.addEventListener('touchstart', (e) => {
         e.preventDefault();
@@ -133,6 +124,37 @@ function setupControls() {
             e.preventDefault();
         }
     }, { passive: false });
+    
+    // Handle window resize
+    window.addEventListener('resize', resizeCanvas);
+}
+
+// Reset game state
+function resetGame() {
+    // Create player ship
+    ship = {
+        x: canvas.width / 2,
+        y: canvas.height / 2,
+        radius: 10,
+        angle: 0, // In radians
+        velocity: { x: 0, y: 0 },
+        rotationSpeed: 0.05,
+        acceleration: 0.5,
+        maxSpeed: 5,
+        friction: 0.98,
+        shootCooldown: 0,
+        maxShootCooldown: 10
+    };
+    
+    // Reset game state
+    asteroids = [];
+    bullets = [];
+    particles = [];
+    score = 0;
+    gameOver = false;
+    
+    // Create initial asteroids
+    createAsteroids(5);
 }
 
 // Create a specified number of asteroids
@@ -187,7 +209,7 @@ function createAsteroid(size = 3, x = null, y = null) {
 
 // Main game loop
 function gameLoop() {
-    if (!gameOver) {
+    if (gameStarted && !gameOver) {
         update();
     }
     render();
@@ -207,6 +229,9 @@ function update() {
     
     // Update asteroids
     updateAsteroids();
+    
+    // Update particles
+    updateParticles();
     
     // Check collisions
     checkCollisions();
@@ -238,6 +263,9 @@ function handleControls() {
             ship.velocity.x = (ship.velocity.x / speed) * ship.maxSpeed;
             ship.velocity.y = (ship.velocity.y / speed) * ship.maxSpeed;
         }
+        
+        // Create thrust particles
+        createThrustParticles();
     }
     
     // Shooting
@@ -249,6 +277,27 @@ function handleControls() {
     // Update shoot cooldown
     if (ship.shootCooldown > 0) {
         ship.shootCooldown--;
+    }
+}
+
+// Create thrust particles
+function createThrustParticles() {
+    // Create particles at the rear of the ship
+    const offsetX = Math.cos(ship.angle + Math.PI) * 10;
+    const offsetY = Math.sin(ship.angle + Math.PI) * 10;
+    
+    for (let i = 0; i < 3; i++) {
+        particles.push({
+            x: ship.x + offsetX + (Math.random() - 0.5) * 5,
+            y: ship.y + offsetY + (Math.random() - 0.5) * 5,
+            radius: Math.random() * 2 + 1,
+            velocity: {
+                x: (Math.random() - 0.5) * 2,
+                y: (Math.random() - 0.5) * 2
+            },
+            life: 20,
+            maxLife: 20
+        });
     }
 }
 
@@ -315,6 +364,25 @@ function updateAsteroids() {
     }
 }
 
+// Update particle positions and remove dead particles
+function updateParticles() {
+    for (let i = particles.length - 1; i >= 0; i--) {
+        const particle = particles[i];
+        
+        // Update position
+        particle.x += particle.velocity.x;
+        particle.y += particle.velocity.y;
+        
+        // Update life
+        particle.life--;
+        
+        // Remove dead particles
+        if (particle.life <= 0) {
+            particles.splice(i, 1);
+        }
+    }
+}
+
 // Check for collisions between bullets and asteroids, and ship and asteroids
 function checkCollisions() {
     // Bullet-asteroid collisions
@@ -327,6 +395,9 @@ function checkCollisions() {
             if (distance(bullet.x, bullet.y, asteroid.x, asteroid.y) < bullet.radius + asteroid.radius) {
                 // Remove bullet
                 bullets.splice(i, 1);
+                
+                // Create explosion particles
+                createExplosion(asteroid.x, asteroid.y);
                 
                 // Split asteroid or remove it
                 splitAsteroid(j);
@@ -344,10 +415,30 @@ function checkCollisions() {
     for (let i = asteroids.length - 1; i >= 0; i--) {
         const asteroid = asteroids[i];
         if (distance(ship.x, ship.y, asteroid.x, asteroid.y) < ship.radius + asteroid.radius) {
+            // Create explosion particles
+            createExplosion(ship.x, ship.y);
+            
             // Game over
             endGame();
             break;
         }
+    }
+}
+
+// Create explosion particles
+function createExplosion(x, y) {
+    for (let i = 0; i < 20; i++) {
+        particles.push({
+            x: x,
+            y: y,
+            radius: Math.random() * 3 + 1,
+            velocity: {
+                x: (Math.random() - 0.5) * 5,
+                y: (Math.random() - 0.5) * 5
+            },
+            life: 30,
+            maxLife: 30
+        });
     }
 }
 
@@ -410,17 +501,22 @@ function render() {
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Draw ship
-    drawShip();
-    
-    // Draw bullets
-    drawBullets();
-    
-    // Draw asteroids
-    drawAsteroids();
-    
-    // Draw score
-    drawScore();
+    if (gameStarted) {
+        // Draw particles
+        drawParticles();
+        
+        // Draw ship
+        drawShip();
+        
+        // Draw bullets
+        drawBullets();
+        
+        // Draw asteroids
+        drawAsteroids();
+        
+        // Draw score
+        drawScore();
+    }
 }
 
 // Draw the player ship
@@ -463,6 +559,18 @@ function drawAsteroids() {
     }
 }
 
+// Draw all particles
+function drawParticles() {
+    for (const particle of particles) {
+        // Fade out as particle life decreases
+        const alpha = particle.life / particle.maxLife;
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
 // Draw the current score
 function drawScore() {
     ctx.fillStyle = 'white';
@@ -475,16 +583,9 @@ function drawScore() {
 function endGame() {
     gameOver = true;
     finalScoreElement.textContent = score;
-    gameOverScreen.classList.remove('hidden');
+    gameOverScreen.style.display = 'flex';
+    controls.style.display = 'none';
 }
-
-// Restart the game
-restartButton.addEventListener('click', () => {
-    resetGame();
-});
-
-// Handle window resize
-window.addEventListener('resize', resizeCanvas);
 
 // Start the game when page loads
 window.onload = init;
