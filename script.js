@@ -61,6 +61,9 @@ function resetGame() {
     score = 0;
     gameOver = false;
     gameOverScreen.classList.add('hidden');
+    
+    // Create initial asteroids
+    createAsteroids(5);
 }
 
 // Setup mobile controls
@@ -132,6 +135,56 @@ function setupControls() {
     }, { passive: false });
 }
 
+// Create a specified number of asteroids
+function createAsteroids(count) {
+    for (let i = 0; i < count; i++) {
+        createAsteroid();
+    }
+}
+
+// Create a single asteroid
+function createAsteroid(size = 3, x = null, y = null) {
+    // If position not specified, create at random edge
+    if (x === null || y === null) {
+        const side = Math.floor(Math.random() * 4);
+        switch (side) {
+            case 0: // Top
+                x = Math.random() * canvas.width;
+                y = -20;
+                break;
+            case 1: // Right
+                x = canvas.width + 20;
+                y = Math.random() * canvas.height;
+                break;
+            case 2: // Bottom
+                x = Math.random() * canvas.width;
+                y = canvas.height + 20;
+                break;
+            case 3: // Left
+                x = -20;
+                y = Math.random() * canvas.height;
+                break;
+        }
+    }
+    
+    // Random velocity
+    const speed = Math.random() * 2 + 1;
+    const angle = Math.random() * Math.PI * 2;
+    const velocityX = Math.cos(angle) * speed;
+    const velocityY = Math.sin(angle) * speed;
+    
+    // Radius based on size (3 = large, 2 = medium, 1 = small)
+    const radius = size * 10;
+    
+    asteroids.push({
+        x: x,
+        y: y,
+        radius: radius,
+        velocity: { x: velocityX, y: velocityY },
+        size: size
+    });
+}
+
 // Main game loop
 function gameLoop() {
     if (!gameOver) {
@@ -154,6 +207,9 @@ function update() {
     
     // Update asteroids
     updateAsteroids();
+    
+    // Check collisions
+    checkCollisions();
 }
 
 // Handle player input
@@ -259,6 +315,82 @@ function updateAsteroids() {
     }
 }
 
+// Check for collisions between bullets and asteroids, and ship and asteroids
+function checkCollisions() {
+    // Bullet-asteroid collisions
+    for (let i = bullets.length - 1; i >= 0; i--) {
+        const bullet = bullets[i];
+        for (let j = asteroids.length - 1; j >= 0; j--) {
+            const asteroid = asteroids[j];
+            
+            // Check collision
+            if (distance(bullet.x, bullet.y, asteroid.x, asteroid.y) < bullet.radius + asteroid.radius) {
+                // Remove bullet
+                bullets.splice(i, 1);
+                
+                // Split asteroid or remove it
+                splitAsteroid(j);
+                
+                // Increase score
+                score += 10 * asteroid.size;
+                
+                // Break since bullet is destroyed
+                break;
+            }
+        }
+    }
+    
+    // Ship-asteroid collisions
+    for (let i = asteroids.length - 1; i >= 0; i--) {
+        const asteroid = asteroids[i];
+        if (distance(ship.x, ship.y, asteroid.x, asteroid.y) < ship.radius + asteroid.radius) {
+            // Game over
+            endGame();
+            break;
+        }
+    }
+}
+
+// Calculate distance between two points
+function distance(x1, y1, x2, y2) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    return Math.sqrt(dx * dx + dy * dy);
+}
+
+// Split an asteroid into smaller ones or remove it
+function splitAsteroid(index) {
+    const asteroid = asteroids[index];
+    
+    // Remove the asteroid
+    asteroids.splice(index, 1);
+    
+    // If asteroid is large enough, split it into smaller ones
+    if (asteroid.size > 1) {
+        // Create two smaller asteroids
+        for (let i = 0; i < 2; i++) {
+            // Add some variance to the angle
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 2 + 1;
+            const velocityX = Math.cos(angle) * speed;
+            const velocityY = Math.sin(angle) * speed;
+            
+            asteroids.push({
+                x: asteroid.x,
+                y: asteroid.y,
+                radius: (asteroid.size - 1) * 10,
+                velocity: { x: velocityX, y: velocityY },
+                size: asteroid.size - 1
+            });
+        }
+    }
+    
+    // If all asteroids are destroyed, create a new wave
+    if (asteroids.length === 0) {
+        createAsteroids(5);
+    }
+}
+
 // Check if an object is off-screen
 function isOffScreen(obj) {
     return obj.x < 0 || obj.x > canvas.width || obj.y < 0 || obj.y > canvas.height;
@@ -338,6 +470,18 @@ function drawScore() {
     ctx.textAlign = 'left';
     ctx.fillText(`Score: ${score}`, 20, 30);
 }
+
+// End the game
+function endGame() {
+    gameOver = true;
+    finalScoreElement.textContent = score;
+    gameOverScreen.classList.remove('hidden');
+}
+
+// Restart the game
+restartButton.addEventListener('click', () => {
+    resetGame();
+});
 
 // Handle window resize
 window.addEventListener('resize', resizeCanvas);
