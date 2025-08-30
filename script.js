@@ -530,12 +530,6 @@ function render() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     if (gameStarted) {
-        // Save the context
-        ctx.save();
-        
-        // Translate the context so the ship is always at the center
-        ctx.translate(canvas.width / 2 - ship.x, canvas.height / 2 - ship.y);
-        
         // Draw particles
         drawParticles();
         
@@ -545,10 +539,7 @@ function render() {
         // Draw asteroids
         drawAsteroids();
         
-        // Restore the context
-        ctx.restore();
-        
-        // Draw ship at the center of the screen
+        // Draw ship
         drawShip();
     }
 }
