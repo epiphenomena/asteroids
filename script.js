@@ -176,7 +176,7 @@ function resetGame() {
         maxSpeed: 5,
         friction: 0.98,
         shootCooldown: 0,
-        maxShootCooldown: 20, // 50% faster firing rate (30 * 0.67 ≈ 20)
+        maxShootCooldown: 17, // 15% faster firing rate (20 * 0.85 ≈ 17)
         invincible: false,
         invincibilityTime: 0,
         respawnTime: 0,
