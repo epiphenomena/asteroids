@@ -315,18 +315,15 @@ function fireBullet() {
     });
 }
 
-// Update ship position and handle wrapping
+// Update ship position (keep at center) and apply friction to velocity
 function updateShip() {
     // Apply friction
     ship.velocity.x *= ship.friction;
     ship.velocity.y *= ship.friction;
     
-    // Update position
-    ship.x += ship.velocity.x;
-    ship.y += ship.velocity.y;
-    
-    // Screen wrapping
-    wrapAroundScreen(ship);
+    // Move the world instead of the ship
+    // We update the ship's velocity but keep it at the center
+    // The world moves in the opposite direction in the render function
 }
 
 // Update bullet positions and remove off-screen bullets
