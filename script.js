@@ -492,8 +492,10 @@ function checkCollisions() {
                 
                 // Check for game over
                 if (lives <= 0) {
+                    console.log('Game over condition met. Lives:', lives);
                     endGame();
                 } else {
+                    console.log('Life lost. Lives remaining:', lives);
                     // Make ship invisible for 2 seconds (120 frames at 60fps)
                     ship.visible = false;
                     ship.respawnTime = 120;
@@ -704,11 +706,17 @@ function drawShipAtCenter() {
 
 // End the game
 function endGame() {
+    console.log('endGame() called');
     gameOver = true;
     saveHighScore();
     if (finalScoreElement) finalScoreElement.textContent = score;
     if (finalHighScoreElement) finalHighScoreElement.textContent = highScore;
-    if (gameOverScreen) gameOverScreen.classList.add('show');
+    if (gameOverScreen) {
+        console.log('Showing game over screen');
+        gameOverScreen.classList.add('show');
+    } else {
+        console.log('gameOverScreen element not found');
+    }
 }
 
 // Start the game when page loads
