@@ -132,7 +132,7 @@ function resetGame() {
         maxSpeed: 5,
         friction: 0.98,
         shootCooldown: 0,
-        maxShootCooldown: 10
+        maxShootCooldown: 30 // Slower firing rate
     };
     
     // Reset game state
@@ -303,8 +303,8 @@ function fireBullet() {
     const startY = ship.y + Math.sin(ship.angle) * 15;
     
     // Calculate bullet velocity (same direction as ship is facing plus ship's velocity)
-    const velocityX = Math.cos(ship.angle) * 7 + ship.velocity.x;
-    const velocityY = Math.sin(ship.angle) * 7 + ship.velocity.y;
+    const velocityX = Math.cos(ship.angle) * 10 + ship.velocity.x; // Faster bullets
+    const velocityY = Math.sin(ship.angle) * 10 + ship.velocity.y; // Faster bullets
     
     // Create bullet
     bullets.push({
@@ -313,7 +313,7 @@ function fireBullet() {
         radius: 2,
         velocity: { x: velocityX, y: velocityY },
         age: 0,
-        maxAge: 60 // Bullets disappear after 60 frames
+        maxAge: 120 // Bullets disappear after 120 frames (longer lifetime)
     });
 }
 
