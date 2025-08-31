@@ -197,8 +197,11 @@ function resetGame() {
     mines = [];
     turrets = []; // Reset turrets
     
-    // Create a stationary turret
-    createTurret();
+    // Create stationary turrets
+    createTurret(); // Top-right corner
+    createTurret(-canvas.width / 2 + 100, -canvas.height / 2 + 100); // Top-left corner
+    createTurret(canvas.width / 2 - 100, canvas.height / 2 - 100); // Bottom-right corner
+    createTurret(-canvas.width / 2 + 100, canvas.height / 2 - 100); // Bottom-left corner
     
     score = 0;
     lives = 3;
@@ -215,7 +218,7 @@ function resetGame() {
     }
     
     // Create initial asteroids
-    createAsteroids(5);
+    createAsteroids(3);
 }
 
 // Create a specified number of asteroids
@@ -227,8 +230,8 @@ function createAsteroids(count) {
 
 // Create a single asteroid
 function createAsteroid(size = 3, x = null, y = null) {
-    // Randomly decide if this should be a mine (10% chance)
-    const isMine = Math.random() < 0.1;
+    // Randomly decide if this should be a mine (30% chance)
+    const isMine = Math.random() < 0.3;
     
     // If position not specified, create at random edge relative to ship position
     if (x === null || y === null) {
@@ -287,11 +290,16 @@ function createAsteroid(size = 3, x = null, y = null) {
 }
 
 // Create a stationary turret
-function createTurret() {
-    // Position the turret at a fixed location (e.g., top-right corner)
+function createTurret(x = null, y = null) {
+    // Position the turret at a fixed location if not specified
+    if (x === null || y === null) {
+        x = canvas.width / 2 - 100; // Slightly left of right edge
+        y = -canvas.height / 2 + 100; // Slightly below top edge
+    }
+    
     const turret = {
-        x: canvas.width / 2 - 100, // Slightly left of right edge
-        y: -canvas.height / 2 + 100, // Slightly below top edge
+        x: x,
+        y: y,
         radius: 15,
         shootCooldown: 0,
         maxShootCooldown: 360, // 6 seconds at 60fps
@@ -676,7 +684,7 @@ function checkCollisions() {
                 if (asteroids.length === 0 && mines.length === 0) {
                     setTimeout(() => {
                         if (asteroids.length === 0 && mines.length === 0 && !gameOver) {
-                            createAsteroids(5);
+                            createAsteroids(3);
                         }
                     }, 100);
                 }
@@ -715,7 +723,7 @@ function checkCollisions() {
                 if (asteroids.length === 0 && mines.length === 0) {
                     setTimeout(() => {
                         if (asteroids.length === 0 && mines.length === 0 && !gameOver) {
-                            createAsteroids(5);
+                            createAsteroids(3);
                         }
                     }, 100);
                 }
@@ -1000,7 +1008,7 @@ function splitAsteroid(index) {
     if (asteroids.length === 0 && mines.length === 0) {
         setTimeout(() => {
             if (asteroids.length === 0 && mines.length === 0 && !gameOver) {
-                createAsteroids(5);
+                createAsteroids(3);
             }
         }, 100);
     }
