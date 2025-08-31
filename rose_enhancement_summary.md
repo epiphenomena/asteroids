@@ -1,7 +1,7 @@
 # Rose Enhancement Implementation
 
 ## Overview
-Enhanced the rose functionality to shoot poison bullets in all directions and at a faster rate. This makes roses much more effective at eliminating army men and adds a new dynamic to the game.
+Enhanced the rose functionality to shoot poison bullets in all directions and at a balanced rate. This makes roses much more effective at eliminating army men and adds a new dynamic to the game.
 
 ## Features Added
 
@@ -10,10 +10,10 @@ Enhanced the rose functionality to shoot poison bullets in all directions and at
 - Creates a spreading pattern that covers more area
 - More effective at hitting multiple army men simultaneously
 
-### 2. Increased Shooting Frequency
-- Reduced cooldown from 180 frames (3 seconds) to 120 frames (2 seconds)
-- 50% increase in shooting frequency
-- More consistent pressure on army men
+### 2. Balanced Shooting Frequency
+- Shoots every 5 seconds (300 frames at 60fps)
+- Provides consistent pressure without overwhelming
+- Balanced timing for strategic gameplay
 
 ### 3. Spread Pattern
 - Poison bullets spread outward in a circular pattern
@@ -23,14 +23,14 @@ Enhanced the rose functionality to shoot poison bullets in all directions and at
 ## Technical Implementation
 
 ### Modified Functions
-- `createRose()`: Added poisonSpread flag
+- `createRose()`: Added poisonSpread flag and updated cooldown timing
 - `updateRoses()`: Completely rewritten for multi-directional shooting
 - `fireRosePoisonBullet()`: Updated to work with new shooting pattern
 - `drawRoses()`: Visual representation unchanged (still looks the same)
 - `spawnWaveEnemies()`: Roses spawn every 2 waves (increased frequency)
 
 ### New Behavior
-- Roses shoot 8 poison bullets every 2 seconds in all directions
+- Roses shoot 8 poison bullets every 5 seconds in all directions
 - Each bullet travels at speed 5 in its designated direction
 - Bullets automatically despawn when they go off-screen
 - No targeting logic - bullets spread regardless of army men positions
@@ -79,7 +79,7 @@ Enhanced the rose functionality to shoot poison bullets in all directions and at
 ## Technical Details
 
 ### Performance Considerations
-- **Bullet Count**: 8 bullets per rose every 2 seconds (4 bullets/second per rose)
+- **Bullet Count**: 8 bullets per rose every 5 seconds (1.6 bullets/second per rose)
 - **Memory Management**: Off-screen bullets are automatically cleaned up
 - **Collision Detection**: Efficient checking for army men collisions
 

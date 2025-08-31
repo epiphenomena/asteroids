@@ -545,7 +545,7 @@ function createRose(x = null, y = null) {
         y: y,
         radius: 15,
         poisonCooldown: 0,
-        maxPoisonCooldown: 120, // 2 seconds at 60fps (faster shooting)
+        maxPoisonCooldown: 300, // 5 seconds at 60fps
         poisonBullets: [], // Roses have their own poison bullets
         poisonSpread: true // New flag for multi-directional shooting
     };
