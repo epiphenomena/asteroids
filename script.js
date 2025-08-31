@@ -396,9 +396,9 @@ function updateShip() {
         ship.respawnTime--;
         if (ship.respawnTime <= 0) {
             ship.visible = true;
-            // Make ship invincible for 5 seconds after respawn
+            // Make ship invincible for 3 seconds after respawn
             ship.invincible = true;
-            ship.invincibilityTime = 300; // 5 seconds at 60fps
+            ship.invincibilityTime = 180; // 3 seconds at 60fps
         }
     }
     
