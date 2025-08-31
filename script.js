@@ -476,10 +476,11 @@ function createArmyMan(x = null, y = null) {
     const armyMan = {
         x: x,
         y: y,
-        radius: 12, // Increased from 8 to 12 for larger hitbox
+        radius: 12,
         velocity: { x: velocityX, y: velocityY },
-        speed: 1.95, // 30% faster (1.5 * 1.3 = 1.95)
-        maxSpeed: 3.25 // 30% faster (2.5 * 1.3 = 3.25)
+        speed: 1.2, // Decreased from 1.95 to 1.2 (38% slower)
+        maxSpeed: 2.0, // Decreased from 3.25 to 2.0 (38% slower)
+        acceleration: 0.04 // Decreased from 0.065 to 0.04 (38% slower)
     };
     
     armyMen.push(armyMan);
@@ -968,9 +969,9 @@ function updateArmyMen() {
             const directionX = dx / distanceToPlayer;
             const directionY = dy / distanceToPlayer;
             
-            // Apply acceleration toward player (30% faster)
-            armyMan.velocity.x += directionX * 0.065;
-            armyMan.velocity.y += directionY * 0.065;
+            // Apply acceleration toward player (decreased acceleration)
+            armyMan.velocity.x += directionX * armyMan.acceleration;
+            armyMan.velocity.y += directionY * armyMan.acceleration;
             
             // Limit maximum speed
             const speed = Math.sqrt(armyMan.velocity.x * armyMan.velocity.x + armyMan.velocity.y * armyMan.velocity.y);
