@@ -323,7 +323,8 @@ function handleControls() {
     }
     
     // Automatically shoot at a fixed rate (only if ship is visible, game has started, and ship is not invincible)
-    if (ship.shootCooldown <= 0 && ship.visible && gameStarted && !ship.invincible) {
+    // Also prevent shooting when ship is dead (respawning)
+    if (ship.shootCooldown <= 0 && ship.visible && gameStarted && !ship.invincible && ship.respawnTime <= 0) {
         fireBullet();
         ship.shootCooldown = ship.maxShootCooldown;
     }
