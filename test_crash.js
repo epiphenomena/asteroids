@@ -91,10 +91,13 @@ function runGameplayTest() {
             // Run ship control test
             testShipControls();
             
+            // Commenting out the automatic game over test to prevent interference with normal gameplay
+            /*
             // Run game over test
             setTimeout(() => {
                 testGameOverScenario();
             }, 5000);
+            */
         }, 1000);
     } else {
         console.log('✗ Start button not found');
@@ -205,9 +208,18 @@ function testThrustControls(canvas) {
         });
         
         canvas.dispatchEvent(mouseUpEvent);
+        
+        // Commenting out the automatic game over test
+        /*
+        // Run game over test
+        setTimeout(() => {
+            testGameOverScenario();
+        }, 2000);
+        */
     }, 500);
 }
 
+/*
 function testGameOverScenario() {
     console.log('Testing game over scenario...');
     
@@ -228,6 +240,7 @@ function testGameOverScenario() {
         }
     }
 }
+*/
 
 function testGameOverScreen() {
     console.log('Testing game over screen...');
