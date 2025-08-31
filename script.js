@@ -19,11 +19,13 @@ let particles = [];
 let mines = [];
 let turrets = []; // Array to hold turrets
 let armyMen = []; // Array to hold army men
+let powerups = []; // Array to hold powerups
 let score = 0;
 let lives = 3;
 let highScore = 0;
 let gameOver = false;
 let gameStarted = false;
+let bulletSizeMultiplier = 1.0; // Powerup effect for bullet size
 
 // Input state
 let thrust = false;
@@ -198,6 +200,8 @@ function resetGame() {
     mines = [];
     turrets = []; // Reset turrets
     armyMen = []; // Reset army men
+    powerups = []; // Reset powerups
+    bulletSizeMultiplier = 1.0; // Reset bullet size multiplier
     
     // Create initial asteroids
     createAsteroids(3);
@@ -221,6 +225,11 @@ function resetGame() {
     // Create two groups of 5 army men each
     createArmyMenGroup(5); // First group
     createArmyMenGroup(5); // Second group
+    
+    // Create initial powerups
+    createPowerup(); // Create first powerup
+    createPowerup(); // Create second powerup
+    createPowerup(); // Create third powerup
     
     score = 0;
     lives = 3;
@@ -460,6 +469,28 @@ function createArmyMan(x = null, y = null) {
     armyMen.push(armyMan);
 }
 
+// Create a powerup
+function createPowerup(x = null, y = null) {
+    // If position not specified, create at random location
+    if (x === null || y === null) {
+        // Create powerup at a random position, but not too close to the center
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 200 + Math.random() * 300; // 200-500 pixels from center
+        x = Math.cos(angle) * distance;
+        y = Math.sin(angle) * distance;
+    }
+    
+    const powerup = {
+        x: x,
+        y: y,
+        radius: 12,
+        type: 'bulletSize', // Type of powerup
+        pulse: 0 // For animation
+    };
+    
+    powerups.push(powerup);
+}
+
 // Create a group of army men
 function createArmyMenGroup(count) {
     for (let i = 0; i < count; i++) {
@@ -503,6 +534,9 @@ function update() {
     
     // Update army men
     updateArmyMen();
+    
+    // Update powerups
+    updatePowerups();
     
     // Update particles
     updateParticles();
@@ -597,11 +631,11 @@ function fireBullet() {
     const velocityX = Math.cos(ship.angle) * 10 + ship.velocity.x; // Faster bullets
     const velocityY = Math.sin(ship.angle) * 10 + ship.velocity.y; // Faster bullets
     
-    // Create bullet
+    // Create bullet with size based on multiplier
     bullets.push({
         x: startX,
         y: startY,
-        radius: 2,
+        radius: 2 * bulletSizeMultiplier, // Apply size multiplier
         velocity: { x: velocityX, y: velocityY },
         age: 0,
         maxAge: 120 // Bullets disappear after 120 frames (longer lifetime)
@@ -683,6 +717,12 @@ function updateShip() {
     for (const armyMan of armyMen) {
         armyMan.x -= ship.velocity.x;
         armyMan.y -= ship.velocity.y;
+    }
+    
+    // Powerups move with the world
+    for (const powerup of powerups) {
+        powerup.x -= ship.velocity.x;
+        powerup.y -= ship.velocity.y;
     }
 }
 
@@ -863,6 +903,28 @@ function updateArmyMen() {
         if (armyMan.x > rightEdge) armyMan.x = leftEdge;
         if (armyMan.y < topEdge) armyMan.y = bottomEdge;
         if (armyMan.y > bottomEdge) armyMan.y = topEdge;
+    }
+}
+
+// Update powerups
+function updatePowerups() {
+    for (let i = powerups.length - 1; i >= 0; i--) {
+        const powerup = powerups[i];
+        
+        // Update pulse animation
+        powerup.pulse = (powerup.pulse + 0.1) % (Math.PI * 2);
+        
+        // Screen wrapping
+        const buffer = 100; // Distance from screen edge
+        const leftEdge = - canvas.width / 2 - buffer;
+        const rightEdge = canvas.width / 2 + buffer;
+        const topEdge = - canvas.height / 2 - buffer;
+        const bottomEdge = canvas.height / 2 + buffer;
+        
+        if (powerup.x < leftEdge) powerup.x = rightEdge;
+        if (powerup.x > rightEdge) powerup.x = leftEdge;
+        if (powerup.y < topEdge) powerup.y = bottomEdge;
+        if (powerup.y > bottomEdge) powerup.y = topEdge;
     }
 }
 
@@ -1191,6 +1253,34 @@ function checkCollisions() {
             }
         }
     }
+    
+    // Check for ship-powerup collisions (only if ship is visible)
+    if (ship.visible) {
+        for (let i = 0; i < powerups.length; i++) {
+            const powerup = powerups[i];
+            
+            if (distance(0, 0, powerup.x, powerup.y) < ship.radius + powerup.radius) {
+                // Apply powerup effect based on type
+                if (powerup.type === 'bulletSize') {
+                    // Increase bullet size multiplier
+                    bulletSizeMultiplier += 0.5;
+                    
+                    // Create visual effect
+                    createExplosion(powerup.x, powerup.y, false);
+                    
+                    // Increase score
+                    score += 50; // Powerups are worth 50 points
+                    if (scoreValue) scoreValue.textContent = score;
+                }
+                
+                // Remove the powerup
+                powerups.splice(i, 1);
+                
+                // Process only one collision per frame
+                break;
+            }
+        }
+    }
 }
 
 // Create explosion particles
@@ -1374,6 +1464,9 @@ function render() {
         // Draw army men
         drawArmyMen();
         
+        // Draw powerups
+        drawPowerups();
+        
         // Draw ship at the center of the screen
         drawShipAtCenter();
         
@@ -1529,6 +1622,46 @@ function drawArmyMen() {
         ctx.moveTo(armyMan.radius, 0);
         ctx.lineTo(-armyMan.radius, -armyMan.radius/1.5);
         ctx.lineTo(-armyMan.radius, armyMan.radius/1.5);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.restore();
+    }
+}
+
+// Draw all powerups
+function drawPowerups() {
+    ctx.strokeStyle = 'yellow';
+    ctx.lineWidth = 2;
+    for (const powerup of powerups) {
+        // Calculate screen position relative to ship
+        const screenX = powerup.x - ship.x + canvas.width / 2;
+        const screenY = powerup.y - ship.y + canvas.height / 2;
+        
+        // Pulsing effect
+        const pulseSize = Math.sin(powerup.pulse) * 3;
+        
+        // Draw powerup as a star shape
+        ctx.save();
+        ctx.translate(screenX, screenY);
+        
+        // Draw star
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+            const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
+            const outerX = Math.cos(angle) * (powerup.radius + pulseSize);
+            const outerY = Math.sin(angle) * (powerup.radius + pulseSize);
+            if (i === 0) {
+                ctx.moveTo(outerX, outerY);
+            } else {
+                ctx.lineTo(outerX, outerY);
+            }
+            
+            const innerAngle = ((i + 0.5) * 2 * Math.PI / 5) - Math.PI / 2;
+            const innerRadius = (powerup.radius + pulseSize) * 0.5;
+            const innerX = Math.cos(innerAngle) * innerRadius;
+            const innerY = Math.sin(innerAngle) * innerRadius;
+            ctx.lineTo(innerX, innerY);
+        }
         ctx.closePath();
         ctx.stroke();
         ctx.restore();
