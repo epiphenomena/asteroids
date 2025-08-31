@@ -34,6 +34,7 @@ let forceFieldActive = false; // Force field powerup effect
 let forceFieldRadius = 30; // Radius of force field
 let forceFieldLifetime = 0; // Remaining time for force field
 let forceFieldMaxLifetime = 600; // 10 seconds at 60fps
+let shipSizeMultiplier = 1.0; // Powerup effect for ship size
 
 // Input state
 let thrust = false;
@@ -211,7 +212,9 @@ function resetGame() {
     powerups = []; // Reset powerups
     roses = []; // Reset roses
     bulletSizeMultiplier = 1.0; // Reset bullet size multiplier
+    shipSizeMultiplier = 1.0; // Reset ship size multiplier
     waveNumber = 1; // Reset wave number
+    waveTimer = 0; // Reset wave timer
     forceFieldActive = false; // Reset force field
     forceFieldLifetime = 0; // Reset force field lifetime
     
@@ -487,11 +490,15 @@ function createPowerup(x = null, y = null) {
         y = Math.sin(angle) * distance;
     }
     
+    // 20% chance for ship size powerup, 60% for bullet size, 20% for force field
+    const powerupType = Math.random() < 0.2 ? 'shipSize' : 
+                       Math.random() < 0.75 ? 'bulletSize' : 'forceField';
+    
     const powerup = {
         x: x,
         y: y,
         radius: 12,
-        type: 'bulletSize', // Bullet size powerup type
+        type: powerupType, // Type of powerup ('bulletSize', 'forceField', or 'shipSize')
         pulse: 0 // For animation
     };
     
@@ -1335,7 +1342,7 @@ function checkCollisions() {
         for (let i = 0; i < asteroids.length; i++) {
             const asteroid = asteroids[i];
             
-            if (distance(0, 0, asteroid.x, asteroid.y) < ship.radius + asteroid.radius) {
+            if (distance(0, 0, asteroid.x, asteroid.y) < ship.radius * shipSizeMultiplier + asteroid.radius) {
                 // Create explosion particles for both ship and asteroid
                 createExplosion(0, 0, false); // Ship explosion
                 createExplosion(asteroid.x, asteroid.y, false); // Asteroid explosion
@@ -1382,7 +1389,7 @@ function checkCollisions() {
         for (let i = 0; i < mines.length; i++) {
             const mine = mines[i];
             
-            if (distance(0, 0, mine.x, mine.y) < ship.radius + mine.radius) {
+            if (distance(0, 0, mine.x, mine.y) < ship.radius * shipSizeMultiplier + mine.radius) {
                 // Create mine explosion that affects nearby objects
                 const explosionRadius = 100; // Approximately 1 inch at typical screen resolution
                 createExplosion(0, 0, false);
@@ -1433,7 +1440,7 @@ function checkCollisions() {
         for (let i = 0; i < armyMen.length; i++) {
             const armyMan = armyMen[i];
             
-            if (distance(0, 0, armyMan.x, armyMan.y) < ship.radius + armyMan.radius) {
+            if (distance(0, 0, armyMan.x, armyMan.y) < ship.radius * shipSizeMultiplier + armyMan.radius) {
                 // Create explosion particles for both ship and army man
                 createExplosion(0, 0, false); // Ship explosion
                 createExplosion(armyMan.x, armyMan.y, false); // Army man explosion
@@ -1527,7 +1534,7 @@ function checkCollisions() {
         for (let i = 0; i < powerups.length; i++) {
             const powerup = powerups[i];
             
-            if (distance(0, 0, powerup.x, powerup.y) < ship.radius + powerup.radius) {
+            if (distance(0, 0, powerup.x, powerup.y) < ship.radius * shipSizeMultiplier + powerup.radius) {
                 // Apply powerup effect based on type
                 if (powerup.type === 'bulletSize') {
                     // Increase bullet size multiplier
@@ -1549,6 +1556,16 @@ function checkCollisions() {
                     
                     // Increase score
                     score += 75; // Force field powerups are worth more points
+                    if (scoreValue) scoreValue.textContent = score;
+                } else if (powerup.type === 'shipSize') {
+                    // Increase ship size multiplier
+                    shipSizeMultiplier += 0.3;
+                    
+                    // Create visual effect
+                    createExplosion(powerup.x, powerup.y, false);
+                    
+                    // Increase score
+                    score += 60; // Ship size powerups are worth 60 points
                     if (scoreValue) scoreValue.textContent = score;
                 }
                 
@@ -1913,8 +1930,6 @@ function drawArmyMen() {
 
 // Draw all powerups
 function drawPowerups() {
-    ctx.strokeStyle = 'yellow';
-    ctx.lineWidth = 2;
     for (const powerup of powerups) {
         // Calculate screen position relative to ship
         const screenX = powerup.x - ship.x + canvas.width / 2;
@@ -1926,19 +1941,11 @@ function drawPowerups() {
         ctx.save();
         ctx.translate(screenX, screenY);
         
-        if (powerup.type === 'forceField') {
-            // Draw force field powerup as a blue circle with inner circle
-            ctx.strokeStyle = 'blue';
-            ctx.beginPath();
-            ctx.arc(0, 0, powerup.radius + pulseSize, 0, Math.PI * 2);
-            ctx.stroke();
-            
-            // Draw inner circle
-            ctx.beginPath();
-            ctx.arc(0, 0, (powerup.radius + pulseSize) * 0.6, 0, Math.PI * 2);
-            ctx.stroke();
-        } else {
-            // Draw bullet size powerup as a star shape
+        // Draw powerup based on type
+        if (powerup.type === 'bulletSize') {
+            // Draw bullet size powerup as a star shape (yellow)
+            ctx.strokeStyle = 'yellow';
+            ctx.lineWidth = 2;
             ctx.beginPath();
             for (let i = 0; i < 5; i++) {
                 const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
@@ -1956,6 +1963,28 @@ function drawPowerups() {
                 const innerY = Math.sin(innerAngle) * innerRadius;
                 ctx.lineTo(innerX, innerY);
             }
+            ctx.closePath();
+            ctx.stroke();
+        } else if (powerup.type === 'forceField') {
+            // Draw force field powerup as a circle with inner circle (blue)
+            ctx.strokeStyle = 'blue';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, 0, powerup.radius + pulseSize, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // Draw inner circle
+            ctx.beginPath();
+            ctx.arc(0, 0, (powerup.radius + pulseSize) * 0.6, 0, Math.PI * 2);
+            ctx.stroke();
+        } else if (powerup.type === 'shipSize') {
+            // Draw ship size powerup as a triangle (cyan)
+            ctx.strokeStyle = 'cyan';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, -(powerup.radius + pulseSize)); // Top point
+            ctx.lineTo(-(powerup.radius + pulseSize), (powerup.radius + pulseSize)); // Bottom left
+            ctx.lineTo((powerup.radius + pulseSize), (powerup.radius + pulseSize)); // Bottom right
             ctx.closePath();
             ctx.stroke();
         }
@@ -2028,7 +2057,7 @@ function drawShipAtCenter() {
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.rotate(ship.angle);
     
-    // Draw ship as a triangle
+    // Draw ship as a triangle with size based on multiplier
     let strokeStyle = 'white';
     
     // If ship is invincible, make it blink
@@ -2039,9 +2068,9 @@ function drawShipAtCenter() {
     ctx.strokeStyle = strokeStyle;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(10, 0); // Nose of the ship
-    ctx.lineTo(-10, -7); // Rear left
-    ctx.lineTo(-10, 7); // Rear right
+    ctx.moveTo(ship.radius * shipSizeMultiplier, 0); // Nose of the ship
+    ctx.lineTo(-ship.radius * shipSizeMultiplier, -ship.radius * shipSizeMultiplier * 0.7); // Rear left
+    ctx.lineTo(-ship.radius * shipSizeMultiplier, ship.radius * shipSizeMultiplier * 0.7); // Rear right
     ctx.closePath();
     ctx.stroke();
     
@@ -2058,12 +2087,12 @@ function drawForceField() {
     // Calculate alpha based on remaining lifetime (pulse effect)
     const alpha = 0.3 + 0.2 * Math.sin(forceFieldLifetime / 10);
     
-    // Draw force field circle
+    // Draw force field circle with size based on ship size multiplier
     ctx.strokeStyle = `rgba(0, 100, 255, ${alpha})`;
     ctx.lineWidth = 2;
     ctx.setLineDash([5, 3]); // Dashed line
     ctx.beginPath();
-    ctx.arc(0, 0, forceFieldRadius, 0, Math.PI * 2);
+    ctx.arc(0, 0, forceFieldRadius * shipSizeMultiplier, 0, Math.PI * 2);
     ctx.stroke();
     ctx.setLineDash([]); // Reset line dash
     
