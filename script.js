@@ -1165,8 +1165,10 @@ function spawnWaveEnemies() {
         createAsteroid(3, null, null, true); // Create large mines
     }
     
-    // Create army men groups (3 army men every wave)
-    createArmyMenGroup(3); // 3 army men every wave
+    // Create army men groups (3 army men every 3 waves)
+    if (waveNumber % 3 === 0) { // Every 3 waves
+        createArmyMenGroup(3); // 3 army men every 3 waves
+    }
     
     // Create turrets (add new ones every 3 waves)
     if (waveNumber > 1 && waveNumber % 3 === 1) { // Start at wave 4, then every 3 waves
