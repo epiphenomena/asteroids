@@ -17,9 +17,18 @@ Enemies now respawn only when all previous enemies are defeated:
 - Enemy count increases progressively with each wave
 
 ### 3. Wave Progression
-Each wave increases in difficulty through more frequent enemy spawning:
+Each wave increases in difficulty through progressive enemy spawning:
+
+**Army Men Progression:**
+- Waves 1-3: 3 army men per wave
+- Waves 4-6: 6 army men per wave
+- Waves 7-9: 9 army men per wave
+- Waves 10-12: 12 army men per wave
+- Waves 13-15: 15 army men per wave
+- And so on...
+
+**Other Enemies:**
 - **1 new asteroid every wave** (wave 1: 1 asteroid, wave 2: 2 asteroids, etc.)
-- **3 army men every 3 waves** (wave 3: 3 army men, wave 6: 3 more, etc.)
 - **1 mine every 3 waves** (starting at wave 3)
 - **1 turret every 3 waves** (starting at wave 4)
 - **1 rose every 2 waves** (starting at wave 2)
@@ -57,8 +66,8 @@ Each wave increases in difficulty through more frequent enemy spawning:
 - Increases by 1 every 3 waves
 
 ### Army Men
-- Count: 3 per group
-- Spawn: Every 3 waves (wave 3, 6, 9, 12, etc.)
+- Count: (floor((waveNumber - 1) / 3) + 1) * 3
+- Cycle: 3 army men for waves 1-3, 6 for waves 4-6, 9 for waves 7-9, etc.
 
 ### Turrets
 - Spawn: Every 3 waves (starting at wave 4)
@@ -73,7 +82,7 @@ Each wave increases in difficulty through more frequent enemy spawning:
 - **Force Field: 1 per wave**
 
 ## Game Flow
-1. Wave 1 starts with minimal enemies (1 asteroid)
+1. Wave 1 starts with minimal enemies (1 asteroid, 3 army men)
 2. Player must destroy all asteroids, mines, and army men
 3. When all are defeated, next wave begins with more enemies
 4. Process repeats with increasing difficulty
