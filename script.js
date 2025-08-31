@@ -199,6 +199,9 @@ function resetGame() {
     turrets = []; // Reset turrets
     armyMen = []; // Reset army men
     
+    // Create initial asteroids
+    createAsteroids(3);
+    
     // Create stationary turrets
     createTurret(); // Top-right corner
     createTurret(-canvas.width / 2 + 100, -canvas.height / 2 + 100); // Top-left corner
@@ -302,6 +305,68 @@ function createTurret(x = null, y = null) {
     if (x === null || y === null) {
         x = canvas.width / 2 - 100; // Slightly left of right edge
         y = -canvas.height / 2 + 100; // Slightly below top edge
+    }
+    
+    // Check if turret position is too close to the center (ship start position)
+    const distanceFromCenter = Math.sqrt(x * x + y * y);
+    if (distanceFromCenter < 150) {
+        // Move turret away from center if too close
+        const angle = Math.atan2(y, x);
+        x = Math.cos(angle) * 150;
+        y = Math.sin(angle) * 150;
+    }
+    
+    // Check for collisions with existing asteroids/mines (try up to 10 times)
+    let attempts = 0;
+    let collision = true;
+    
+    while (collision && attempts < 10) {
+        collision = false;
+        attempts++;
+        
+        // Check asteroids
+        for (const asteroid of asteroids) {
+            const dx = x - asteroid.x;
+            const dy = y - asteroid.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < 25 + asteroid.radius) {
+                collision = true;
+                // Move turret to a different corner
+                const corners = [
+                    {x: canvas.width / 2 - 100, y: -canvas.height / 2 + 100}, // Top-left
+                    {x: canvas.width / 2 - 100, y: canvas.height / 2 - 100}, // Bottom-right
+                    {x: -canvas.width / 2 + 100, y: -canvas.height / 2 + 100}, // Top-left
+                    {x: -canvas.width / 2 + 100, y: canvas.height / 2 - 100} // Bottom-left
+                ];
+                const corner = corners[Math.floor(Math.random() * corners.length)];
+                x = corner.x + (Math.random() - 0.5) * 50;
+                y = corner.y + (Math.random() - 0.5) * 50;
+                break;
+            }
+        }
+        
+        // Check mines
+        if (!collision) {
+            for (const mine of mines) {
+                const dx = x - mine.x;
+                const dy = y - mine.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < 25 + mine.radius) {
+                    collision = true;
+                    // Move turret to a different corner
+                    const corners = [
+                        {x: canvas.width / 2 - 100, y: -canvas.height / 2 + 100}, // Top-left
+                        {x: canvas.width / 2 - 100, y: canvas.height / 2 - 100}, // Bottom-right
+                        {x: -canvas.width / 2 + 100, y: -canvas.height / 2 + 100}, // Top-left
+                        {x: -canvas.width / 2 + 100, y: canvas.height / 2 - 100} // Bottom-left
+                    ];
+                    const corner = corners[Math.floor(Math.random() * corners.length)];
+                    x = corner.x + (Math.random() - 0.5) * 50;
+                    y = corner.y + (Math.random() - 0.5) * 50;
+                    break;
+                }
+            }
+        }
     }
     
     const turret = {
