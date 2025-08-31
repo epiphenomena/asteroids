@@ -1,7 +1,7 @@
 # Wave System Implementation
 
 ## Overview
-Implemented a wave-based enemy respawn system where new waves spawn only after all enemies from the previous wave are defeated. This creates a more strategic progression where players must clear each wave before facing the next challenge.
+Implemented a wave-based enemy respawn system where new waves spawn only after all enemies from the previous wave are defeated. Players must defeat all 15 waves to win the game.
 
 ## Features Added
 
@@ -9,6 +9,7 @@ Implemented a wave-based enemy respawn system where new waves spawn only after a
 - `waveNumber`: Tracks the current wave (starts at 1)
 - Waves advance only when all enemies are defeated
 - No timer-based wave progression
+- **Win Condition**: Defeat all 15 waves to win the game
 
 ### 2. Enemy Respawn System
 Enemies now respawn only when all previous enemies are defeated:
@@ -16,7 +17,12 @@ Enemies now respawn only when all previous enemies are defeated:
 - Turrets, roses, and powerups persist between waves
 - Enemy count increases progressively with each wave
 
-### 3. Wave Progression
+### 3. Victory Condition
+- **Win at Wave 15**: After defeating wave 15, player wins the game
+- **Victory Screen**: Special victory message and styling
+- **Restart Option**: Play again after winning
+
+### 4. Wave Progression
 Each wave increases in difficulty through progressive enemy spawning:
 
 **Army Men Progression:**
@@ -35,15 +41,18 @@ Each wave increases in difficulty through progressive enemy spawning:
 - **Force field powerup every wave** (guaranteed resource)
 - **Bullet size powerups with increased frequency**
 
-### 4. UI Elements
+### 5. UI Elements
 - Added wave display to game UI
 - Added wave reached to game over screen
+- **Special Victory Message**: Congratulatory message for completing all waves
+- **Victory Styling**: Green text shadow for victory screen title
 
 ## Implementation Details
 
 ### New Functions
-- `updateWaves()`: Checks if all enemies defeated and spawns next wave
+- `updateWaves()`: Checks if all enemies defeated and spawns next wave, handles win condition
 - `spawnWaveEnemies()`: Spawns appropriate enemies for current wave
+- `winGame()`: Handles victory condition and displays win screen
 - Modified `createAsteroid()` to support forced mine creation
 - `createForceFieldPowerup()`: Creates force field powerups
 
@@ -51,6 +60,7 @@ Each wave increases in difficulty through progressive enemy spawning:
 - `resetGame()`: Initialize wave system variables
 - `update()`: Call wave update system
 - `endGame()`: Display final wave reached
+- `index.html`: Added victory message and updated start screen instructions
 
 ### New Variables
 - `waveNumber`: Current wave number
@@ -86,4 +96,5 @@ Each wave increases in difficulty through progressive enemy spawning:
 2. Player must destroy all asteroids, mines, and army men
 3. When all are defeated, next wave begins with more enemies
 4. Process repeats with increasing difficulty
-5. Turrets, roses, and powerups remain between waves
+5. After wave 15, player wins the game
+6. Turrets, roses, and powerups remain between waves

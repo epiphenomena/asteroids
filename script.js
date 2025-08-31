@@ -1136,10 +1136,22 @@ function updateForceField() {
 function updateWaves() {
     if (!gameStarted || gameOver) return;
     
+    // Check if player has won (reached wave 15)
+    if (waveNumber > 15) {
+        winGame();
+        return;
+    }
+    
     // Check if all enemies from current wave are defeated
     if (asteroids.length === 0 && mines.length === 0 && armyMen.length === 0) {
         // All enemies defeated, spawn next wave
         waveNumber++;
+        
+        // Check if player has won after incrementing wave number
+        if (waveNumber > 15) {
+            winGame();
+            return;
+        }
         
         // Spawn new enemies for the next wave
         spawnWaveEnemies();
@@ -2156,6 +2168,44 @@ function endGame() {
     if (finalWaveElement) finalWaveElement.textContent = waveNumber;
     if (gameOverScreen) {
         console.log('Showing game over screen');
+        gameOverScreen.classList.add('show');
+        // Also set display explicitly to ensure visibility
+        gameOverScreen.style.display = 'flex';
+    } else {
+        console.log('gameOverScreen element not found');
+    }
+}
+
+// Win the game
+function winGame() {
+    console.log('winGame() called');
+    gameOver = true;
+    saveHighScore();
+    
+    // Show win message
+    if (finalScoreElement) finalScoreElement.textContent = score;
+    if (finalHighScoreElement) finalHighScoreElement.textContent = highScore;
+    if (finalWaveElement) finalWaveElement.textContent = "15 - VICTORY!";
+    
+    // Create win screen or modify existing game over screen
+    const gameOverTitle = document.querySelector('#gameOverScreen h2');
+    if (gameOverTitle) {
+        gameOverTitle.textContent = 'VICTORY!';
+        gameOverTitle.style.textShadow = '0 0 10px #0f0, 0 0 20px #0f0, 0 0 30px #0f0';
+    }
+    
+    const gameOverMessage = document.querySelector('#gameOverScreen p:first-of-type');
+    if (gameOverMessage) {
+        gameOverMessage.innerHTML = 'You have defeated all waves!<br>Congratulations, you are the champion!';
+    }
+    
+    const restartButton = document.getElementById('restartButton');
+    if (restartButton) {
+        restartButton.textContent = 'Play Again';
+    }
+    
+    if (gameOverScreen) {
+        console.log('Showing win screen');
         gameOverScreen.classList.add('show');
         // Also set display explicitly to ensure visibility
         gameOverScreen.style.display = 'flex';
