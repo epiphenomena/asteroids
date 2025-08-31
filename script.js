@@ -812,6 +812,10 @@ function checkCollisions() {
                 createExplosion(0, 0, false); // Ship explosion
                 createExplosion(asteroid.x, asteroid.y, false); // Asteroid explosion
                 
+                // Increase score for destroying the asteroid
+                score += 10 * asteroid.size;
+                if (scoreValue) scoreValue.textContent = score;
+                
                 // Remove the asteroid that was collided with
                 asteroids.splice(i, 1);
                 
@@ -846,6 +850,10 @@ function checkCollisions() {
                 const explosionRadius = 100; // Approximately 1 inch at typical screen resolution
                 createExplosion(0, 0, false);
                 createExplosion(mine.x, mine.y, true); // Also create explosion at mine position
+                
+                // Increase score for destroying the mine
+                score += 15 * mine.size; // Mines are worth more points
+                if (scoreValue) scoreValue.textContent = score;
                 
                 // Remove the mine that exploded
                 mines.splice(i, 1);
