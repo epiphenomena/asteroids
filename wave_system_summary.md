@@ -17,20 +17,14 @@ Enemies now respawn only when all previous enemies are defeated:
 - Enemy count increases progressively with each wave
 
 ### 3. Wave Progression
-Each wave increases in difficulty through progressive enemy spawning:
-- **Wave 1**: 1 asteroid, 0 mines, 0 army men
-- **Wave 2**: 2 asteroids, 0 mines, 2 army men
-- **Wave 3**: 2 asteroids, 1 mine, 0 army men
-- **Wave 4**: 3 asteroids, 1 mine, 3 army men
-- **Wave 5**: 3 asteroids, 1 mine, 0 army men
-- **Wave 6**: 4 asteroids, 2 mines, 4 army men
-- And so on...
-
-Additional enemies spawn at regular intervals:
-- New turret every 3 waves (starting at wave 4)
-- New rose every 5 waves (starting at wave 6)
-- Force field powerup every wave
-- Bullet size powerups with increased frequency
+Each wave increases in difficulty through more frequent enemy spawning:
+- **1 new asteroid every wave** (wave 1: 1 asteroid, wave 2: 2 asteroids, etc.)
+- **3 army men every wave** (consistent threat)
+- **1 mine every 3 waves** (starting at wave 3)
+- **1 turret every 3 waves** (starting at wave 4)
+- **1 rose every 2 waves** (starting at wave 2)
+- **Force field powerup every wave** (guaranteed resource)
+- **Bullet size powerups with increased frequency**
 
 ### 4. UI Elements
 - Added wave display to game UI
@@ -55,24 +49,23 @@ Additional enemies spawn at regular intervals:
 ## Wave Progression Formula
 
 ### Asteroids
-- Count: 1 + floor(waveNumber / 2)
-- Increases by 1 every 2 waves
+- Count: waveNumber
+- Increases by 1 every wave
 
 ### Mines
 - Count: floor(waveNumber / 3)
 - Increases by 1 every 3 waves
 
 ### Army Men
-- Spawn: Every 2 waves (starting at wave 2)
-- Count: 2 + floor((waveNumber - 2) / 2)
-- Increases by 1 every 2 waves
+- Count: 3 per wave (consistent)
+- Spawns every wave
 
 ### Turrets
 - Spawn: Every 3 waves (starting at wave 4)
 - Count: 1 new turret per spawn
 
 ### Roses
-- Spawn: Every 5 waves (starting at wave 6)
+- Spawn: Every 2 waves (starting at wave 2)
 - Count: 1 new rose per spawn
 
 ### Powerups
@@ -80,7 +73,7 @@ Additional enemies spawn at regular intervals:
 - **Force Field: 1 per wave**
 
 ## Game Flow
-1. Wave 1 starts with minimal enemies (1 asteroid)
+1. Wave 1 starts with minimal enemies (1 asteroid, 3 army men)
 2. Player must destroy all asteroids, mines, and army men
 3. When all are defeated, next wave begins with more enemies
 4. Process repeats with increasing difficulty

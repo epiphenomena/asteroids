@@ -1155,8 +1155,8 @@ function updateWaves() {
 
 // Spawn enemies for current wave
 function spawnWaveEnemies() {
-    // Create asteroids (start with 1, increase by 1 every 2 waves)
-    const asteroidCount = 1 + Math.floor(waveNumber / 2); // 1, 1, 2, 2, 3, 3, etc.
+    // Create asteroids (increase by 1 every wave)
+    const asteroidCount = waveNumber; // 1, 2, 3, 4, 5, etc.
     createAsteroids(asteroidCount);
     
     // Create mines (start with 0, increase by 1 every 3 waves)
@@ -1165,11 +1165,8 @@ function spawnWaveEnemies() {
         createAsteroid(3, null, null, true); // Create large mines
     }
     
-    // Create army men groups (start with 0, increase by 1 group every 2 waves)
-    if (waveNumber > 1 && waveNumber % 2 === 0) { // Start at wave 2, then every 2 waves
-        const armyMenCount = 2 + Math.floor((waveNumber - 2) / 2); // 2, 3, 4, 5, etc.
-        createArmyMenGroup(armyMenCount);
-    }
+    // Create army men groups (3 army men every wave)
+    createArmyMenGroup(3); // 3 army men every wave
     
     // Create turrets (add new ones every 3 waves)
     if (waveNumber > 1 && waveNumber % 3 === 1) { // Start at wave 4, then every 3 waves
@@ -1181,8 +1178,8 @@ function spawnWaveEnemies() {
         createPowerup();
     }
     
-    // Create roses (add new ones every 5 waves)
-    if (waveNumber > 1 && waveNumber % 5 === 1) { // Start at wave 6, then every 5 waves
+    // Create roses (add new ones every 2 waves)
+    if (waveNumber > 1 && waveNumber % 2 === 0) { // Start at wave 2, then every 2 waves
         createRose(); // Add one new rose
     }
     
