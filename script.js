@@ -242,9 +242,10 @@ function resetGame() {
     createArmyMenGroup(5); // Second group
     
     // Create initial powerups
-    createPowerup(); // Create first powerup
-    createPowerup(); // Create second powerup
-    createPowerup(); // Create third powerup
+    createPowerup(); // Create first bullet size powerup
+    createPowerup(); // Create second bullet size powerup
+    createPowerup(); // Create third bullet size powerup
+    createForceFieldPowerup(); // Create first force field powerup
     
     // Create a rose
     createRose();
@@ -487,7 +488,29 @@ function createArmyMan(x = null, y = null) {
     armyMen.push(armyMan);
 }
 
-// Create a powerup
+// Create a force field powerup
+function createForceFieldPowerup(x = null, y = null) {
+    // If position not specified, create at random location
+    if (x === null || y === null) {
+        // Create powerup at a random position, but not too close to the center
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 200 + Math.random() * 300; // 200-500 pixels from center
+        x = Math.cos(angle) * distance;
+        y = Math.sin(angle) * distance;
+    }
+    
+    const powerup = {
+        x: x,
+        y: y,
+        radius: 12,
+        type: 'forceField', // Force field powerup type
+        pulse: 0 // For animation
+    };
+    
+    powerups.push(powerup);
+}
+
+// Create a powerup (bullet size only)
 function createPowerup(x = null, y = null) {
     // If position not specified, create at random location
     if (x === null || y === null) {
@@ -498,14 +521,11 @@ function createPowerup(x = null, y = null) {
         y = Math.sin(angle) * distance;
     }
     
-    // 20% chance to create a force field powerup, 80% chance for bullet size
-    const powerupType = Math.random() < 0.2 ? 'forceField' : 'bulletSize';
-    
     const powerup = {
         x: x,
         y: y,
         radius: 12,
-        type: powerupType, // Type of powerup ('bulletSize' or 'forceField')
+        type: 'bulletSize', // Bullet size powerup type
         pulse: 0 // For animation
     };
     
@@ -1179,6 +1199,9 @@ function spawnWaveEnemies() {
     if (waveNumber % 5 === 0) {
         createRose(); // Add one new rose
     }
+    
+    // Create a force field powerup every wave
+    createForceFieldPowerup();
     
     console.log(`Wave ${waveNumber} spawned with ${asteroidCount} asteroids, ${mineCount} mines`);
 }

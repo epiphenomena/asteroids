@@ -24,6 +24,7 @@ Each wave increases in difficulty:
 - Turrets added every 3 waves
 - Powerups spawn more frequently
 - Roses added every 5 waves
+- **Force field powerup spawns every wave**
 
 ### 4. UI Elements
 - Added wave display to game UI
@@ -35,6 +36,7 @@ Each wave increases in difficulty:
 - `updateWaves()`: Manages wave timing and progression
 - `spawnWaveEnemies()`: Spawns appropriate enemies for current wave
 - Modified `createAsteroid()` to support forced mine creation
+- `createForceFieldPowerup()`: Creates force field powerups
 
 ### Modified Functions
 - `resetGame()`: Initialize wave system variables
@@ -68,6 +70,10 @@ Each wave increases in difficulty:
 ### Roses
 - Spawn: Every 5 waves
 - Count: 1 new rose per spawn
+
+### Powerups
+- Bullet Size: Spawn more frequently as game progresses
+- **Force Field: 1 per wave**
 
 ### Wave Timer
 - Base: 30 seconds (1800 frames)
