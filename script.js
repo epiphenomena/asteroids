@@ -1155,24 +1155,24 @@ function updateWaves() {
 
 // Spawn enemies for current wave
 function spawnWaveEnemies() {
-    // Create asteroids (increase count with wave number, but keep it manageable)
-    const asteroidCount = 1 + Math.min(3, Math.floor(waveNumber / 3)); // Up to 4 asteroids per wave
+    // Create asteroids (start with 1, increase by 1 every 2 waves)
+    const asteroidCount = 1 + Math.floor(waveNumber / 2); // 1, 1, 2, 2, 3, 3, etc.
     createAsteroids(asteroidCount);
     
-    // Create mines (increase count with wave number, but keep it manageable)
-    const mineCount = Math.min(2, Math.floor(waveNumber / 4)); // Up to 2 mines per wave
+    // Create mines (start with 0, increase by 1 every 3 waves)
+    const mineCount = Math.floor(waveNumber / 3); // 0, 0, 0, 1, 1, 1, 2, 2, 2, etc.
     for (let i = 0; i < mineCount; i++) {
         createAsteroid(3, null, null, true); // Create large mines
     }
     
-    // Create army men groups (increase frequency with wave number, but keep it manageable)
-    if (waveNumber % 3 === 0) { // Every 3 waves instead of every 2
-        const armyMenCount = 2 + Math.min(3, Math.floor(waveNumber / 5)); // Up to 5 army men per group
+    // Create army men groups (start with 0, increase by 1 group every 2 waves)
+    if (waveNumber > 1 && waveNumber % 2 === 0) { // Start at wave 2, then every 2 waves
+        const armyMenCount = 2 + Math.floor((waveNumber - 2) / 2); // 2, 3, 4, 5, etc.
         createArmyMenGroup(armyMenCount);
     }
     
-    // Create turrets (add new ones less frequently)
-    if (waveNumber % 5 === 0) { // Every 5 waves instead of every 3
+    // Create turrets (add new ones every 3 waves)
+    if (waveNumber > 1 && waveNumber % 3 === 1) { // Start at wave 4, then every 3 waves
         createTurret(); // Add one new turret
     }
     
@@ -1181,8 +1181,8 @@ function spawnWaveEnemies() {
         createPowerup();
     }
     
-    // Create roses (add new ones less frequently)
-    if (waveNumber % 7 === 0) { // Every 7 waves instead of every 5
+    // Create roses (add new ones every 5 waves)
+    if (waveNumber > 1 && waveNumber % 5 === 1) { // Start at wave 6, then every 5 waves
         createRose(); // Add one new rose
     }
     

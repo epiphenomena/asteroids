@@ -14,17 +14,23 @@ Implemented a wave-based enemy respawn system where new waves spawn only after a
 Enemies now respawn only when all previous enemies are defeated:
 - All asteroids, mines, and army men must be destroyed
 - Turrets, roses, and powerups persist between waves
-- Each wave increases in difficulty (but at a reduced rate)
+- Enemy count increases progressively with each wave
 
 ### 3. Wave Progression
-Each wave increases in difficulty at a more manageable pace:
-- Asteroids: 1-4 per wave (reduced from 2-7)
-- Mines: 0-2 per wave (reduced from 0-3)
-- Army men: Every 3 waves instead of every 2, 2-5 per group (reduced from 3-7)
-- Turrets: Every 5 waves instead of every 3
-- Powerups: More frequent random spawning
-- Roses: Every 7 waves instead of every 5
-- **Force field powerup spawns every wave**
+Each wave increases in difficulty through progressive enemy spawning:
+- **Wave 1**: 1 asteroid, 0 mines, 0 army men
+- **Wave 2**: 2 asteroids, 0 mines, 2 army men
+- **Wave 3**: 2 asteroids, 1 mine, 0 army men
+- **Wave 4**: 3 asteroids, 1 mine, 3 army men
+- **Wave 5**: 3 asteroids, 1 mine, 0 army men
+- **Wave 6**: 4 asteroids, 2 mines, 4 army men
+- And so on...
+
+Additional enemies spawn at regular intervals:
+- New turret every 3 waves (starting at wave 4)
+- New rose every 5 waves (starting at wave 6)
+- Force field powerup every wave
+- Bullet size powerups with increased frequency
 
 ### 4. UI Elements
 - Added wave display to game UI
@@ -49,33 +55,33 @@ Each wave increases in difficulty at a more manageable pace:
 ## Wave Progression Formula
 
 ### Asteroids
-- Count: 1 + min(3, floor(waveNumber / 3))
-- Range: 1-4 asteroids per wave (reduced)
+- Count: 1 + floor(waveNumber / 2)
+- Increases by 1 every 2 waves
 
 ### Mines
-- Count: min(2, floor(waveNumber / 4))
-- Range: 0-2 mines per wave (reduced)
+- Count: floor(waveNumber / 3)
+- Increases by 1 every 3 waves
 
 ### Army Men
-- Spawn: Every 3 waves (less frequent)
-- Count: 2 + min(3, floor(waveNumber / 5))
-- Range: 2-5 army men per group (reduced)
+- Spawn: Every 2 waves (starting at wave 2)
+- Count: 2 + floor((waveNumber - 2) / 2)
+- Increases by 1 every 2 waves
 
 ### Turrets
-- Spawn: Every 5 waves (less frequent)
+- Spawn: Every 3 waves (starting at wave 4)
 - Count: 1 new turret per spawn
 
 ### Roses
-- Spawn: Every 7 waves (less frequent)
+- Spawn: Every 5 waves (starting at wave 6)
 - Count: 1 new rose per spawn
 
 ### Powerups
-- Bullet Size: Increased random chance (30% -> 40%)
+- Bullet Size: Increased random chance (40%)
 - **Force Field: 1 per wave**
 
 ## Game Flow
-1. Wave 1 starts with initial enemies
+1. Wave 1 starts with minimal enemies (1 asteroid)
 2. Player must destroy all asteroids, mines, and army men
-3. When all are defeated, Wave 2 begins
+3. When all are defeated, next wave begins with more enemies
 4. Process repeats with increasing difficulty
 5. Turrets, roses, and powerups remain between waves
