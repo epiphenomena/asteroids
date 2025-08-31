@@ -179,8 +179,8 @@ function resetGame() {
         angle: 0, // In radians
         velocity: { x: 0, y: 0 },
         rotationSpeed: 0.05,
-        acceleration: 0.65, // 30% faster acceleration (0.5 * 1.3 = 0.65)
-        maxSpeed: 5,
+        acceleration: 0.75, // 15% faster acceleration (0.65 * 1.15 ≈ 0.75)
+        maxSpeed: 5.75, // 15% faster max speed (5 * 1.15 = 5.75)
         friction: 0.98,
         shootCooldown: 0,
         maxShootCooldown: 20, // 20% slower firing rate (17 / 0.8 ≈ 20)
