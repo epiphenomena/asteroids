@@ -32,6 +32,10 @@ let bulletSizeMultiplier = 1.0; // Powerup effect for bullet size
 let waveNumber = 1; // Track current wave
 let waveTimer = 0; // Timer for wave progression
 let maxWaveTimer = 1800; // 30 seconds at 60fps for next wave
+let forceFieldActive = false; // Force field powerup effect
+let forceFieldRadius = 30; // Radius of force field
+let forceFieldLifetime = 0; // Remaining time for force field
+let forceFieldMaxLifetime = 600; // 10 seconds at 60fps
 
 // Input state
 let thrust = false;
@@ -211,6 +215,8 @@ function resetGame() {
     bulletSizeMultiplier = 1.0; // Reset bullet size multiplier
     waveNumber = 1; // Reset wave number
     waveTimer = 0; // Reset wave timer
+    forceFieldActive = false; // Reset force field
+    forceFieldLifetime = 0; // Reset force field lifetime
     
     // Create initial asteroids
     createAsteroids(3);
@@ -492,11 +498,14 @@ function createPowerup(x = null, y = null) {
         y = Math.sin(angle) * distance;
     }
     
+    // 20% chance to create a force field powerup, 80% chance for bullet size
+    const powerupType = Math.random() < 0.2 ? 'forceField' : 'bulletSize';
+    
     const powerup = {
         x: x,
         y: y,
         radius: 12,
-        type: 'bulletSize', // Type of powerup
+        type: powerupType, // Type of powerup ('bulletSize' or 'forceField')
         pulse: 0 // For animation
     };
     
@@ -578,6 +587,9 @@ function update() {
     
     // Update particles
     updateParticles();
+    
+    // Update force field
+    updateForceField();
     
     // Update wave system
     updateWaves();
@@ -1093,6 +1105,16 @@ function updateParticles() {
     }
 }
 
+// Update force field
+function updateForceField() {
+    if (forceFieldActive) {
+        forceFieldLifetime--;
+        if (forceFieldLifetime <= 0) {
+            forceFieldActive = false;
+        }
+    }
+}
+
 // Update wave system
 function updateWaves() {
     if (!gameStarted || gameOver) return;
@@ -1330,20 +1352,29 @@ function checkCollisions() {
                 asteroids.splice(i, 1);
                 
                 // Lose a life
-                lives--;
-                if (livesValue) livesValue.textContent = lives;
-                
-                // Reset ship velocity to zero
-                ship.velocity.x = 0;
-                ship.velocity.y = 0;
-                
-                // Check for game over
-                if (lives <= 0) {
-                    endGame();
+                // Check if force field is active to negate damage
+                if (forceFieldActive) {
+                    // Destroy force field instead of losing a life
+                    forceFieldActive = false;
+                    forceFieldLifetime = 0;
+                    // Create visual effect for force field destruction
+                    createExplosion(0, 0, false);
                 } else {
-                    // Make ship invisible for 2 seconds (120 frames at 60fps)
-                    ship.visible = false;
-                    ship.respawnTime = 120;
+                    lives--;
+                    if (livesValue) livesValue.textContent = lives;
+                    
+                    // Reset ship velocity to zero
+                    ship.velocity.x = 0;
+                    ship.velocity.y = 0;
+                    
+                    // Check for game over
+                    if (lives <= 0) {
+                        endGame();
+                    } else {
+                        // Make ship invisible for 2 seconds (120 frames at 60fps)
+                        ship.visible = false;
+                        ship.respawnTime = 120;
+                    }
                 }
                 
                 // Process only one collision per frame
@@ -1369,23 +1400,32 @@ function checkCollisions() {
                 mines.splice(i, 1);
                 
                 // Lose a life (mines are more dangerous)
-                lives--;
-                if (livesValue) livesValue.textContent = lives;
-                
-                // Reset ship velocity to zero
-                ship.velocity.x = 0;
-                ship.velocity.y = 0;
-                
-                // Check for objects within explosion radius
-                checkMineExplosion(mine.x, mine.y, explosionRadius);
-                
-                // Check for game over
-                if (lives <= 0) {
-                    endGame();
+                // Check if force field is active to negate damage
+                if (forceFieldActive) {
+                    // Destroy force field instead of losing a life
+                    forceFieldActive = false;
+                    forceFieldLifetime = 0;
+                    // Create visual effect for force field destruction
+                    createExplosion(0, 0, false);
                 } else {
-                    // Make ship invisible for 2 seconds (120 frames at 60fps)
-                    ship.visible = false;
-                    ship.respawnTime = 120;
+                    lives--;
+                    if (livesValue) livesValue.textContent = lives;
+                    
+                    // Reset ship velocity to zero
+                    ship.velocity.x = 0;
+                    ship.velocity.y = 0;
+                    
+                    // Check for objects within explosion radius
+                    checkMineExplosion(mine.x, mine.y, explosionRadius);
+                    
+                    // Check for game over
+                    if (lives <= 0) {
+                        endGame();
+                    } else {
+                        // Make ship invisible for 2 seconds (120 frames at 60fps)
+                        ship.visible = false;
+                        ship.respawnTime = 120;
+                    }
                 }
                 
                 // Process only one collision per frame
@@ -1410,20 +1450,29 @@ function checkCollisions() {
                 armyMen.splice(i, 1);
                 
                 // Lose a life
-                lives--;
-                if (livesValue) livesValue.textContent = lives;
-                
-                // Reset ship velocity to zero
-                ship.velocity.x = 0;
-                ship.velocity.y = 0;
-                
-                // Check for game over
-                if (lives <= 0) {
-                    endGame();
+                // Check if force field is active to negate damage
+                if (forceFieldActive) {
+                    // Destroy force field instead of losing a life
+                    forceFieldActive = false;
+                    forceFieldLifetime = 0;
+                    // Create visual effect for force field destruction
+                    createExplosion(0, 0, false);
                 } else {
-                    // Make ship invisible for 2 seconds (120 frames at 60fps)
-                    ship.visible = false;
-                    ship.respawnTime = 120;
+                    lives--;
+                    if (livesValue) livesValue.textContent = lives;
+                    
+                    // Reset ship velocity to zero
+                    ship.velocity.x = 0;
+                    ship.velocity.y = 0;
+                    
+                    // Check for game over
+                    if (lives <= 0) {
+                        endGame();
+                    } else {
+                        // Make ship invisible for 2 seconds (120 frames at 60fps)
+                        ship.visible = false;
+                        ship.respawnTime = 120;
+                    }
                 }
                 
                 // Process only one collision per frame
@@ -1445,20 +1494,29 @@ function checkCollisions() {
                     bullets.splice(i, 1);
                     
                     // Lose a life
-                    lives--;
-                    if (livesValue) livesValue.textContent = lives;
-                    
-                    // Reset ship velocity to zero
-                    ship.velocity.x = 0;
-                    ship.velocity.y = 0;
-                    
-                    // Check for game over
-                    if (lives <= 0) {
-                        endGame();
+                    // Check if force field is active to negate damage
+                    if (forceFieldActive) {
+                        // Destroy force field instead of losing a life
+                        forceFieldActive = false;
+                        forceFieldLifetime = 0;
+                        // Create visual effect for force field destruction
+                        createExplosion(0, 0, false);
                     } else {
-                        // Make ship invisible for 2 seconds (120 frames at 60fps)
-                        ship.visible = false;
-                        ship.respawnTime = 120;
+                        lives--;
+                        if (livesValue) livesValue.textContent = lives;
+                        
+                        // Reset ship velocity to zero
+                        ship.velocity.x = 0;
+                        ship.velocity.y = 0;
+                        
+                        // Check for game over
+                        if (lives <= 0) {
+                            endGame();
+                        } else {
+                            // Make ship invisible for 2 seconds (120 frames at 60fps)
+                            ship.visible = false;
+                            ship.respawnTime = 120;
+                        }
                     }
                     
                     // Process only one collision per frame
@@ -1484,6 +1542,17 @@ function checkCollisions() {
                     
                     // Increase score
                     score += 50; // Powerups are worth 50 points
+                    if (scoreValue) scoreValue.textContent = score;
+                } else if (powerup.type === 'forceField') {
+                    // Activate force field
+                    forceFieldActive = true;
+                    forceFieldLifetime = forceFieldMaxLifetime;
+                    
+                    // Create visual effect
+                    createExplosion(powerup.x, powerup.y, false);
+                    
+                    // Increase score
+                    score += 75; // Force field powerups are worth more points
                     if (scoreValue) scoreValue.textContent = score;
                 }
                 
@@ -1704,6 +1773,9 @@ function render() {
         // Draw ship at the center of the screen
         drawShipAtCenter();
         
+        // Draw force field if active
+        drawForceField();
+        
         // Draw radar indicators for off-screen objects
         drawRadarIndicators();
     }
@@ -1855,30 +1927,42 @@ function drawPowerups() {
         // Pulsing effect
         const pulseSize = Math.sin(powerup.pulse) * 3;
         
-        // Draw powerup as a star shape
         ctx.save();
         ctx.translate(screenX, screenY);
         
-        // Draw star
-        ctx.beginPath();
-        for (let i = 0; i < 5; i++) {
-            const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
-            const outerX = Math.cos(angle) * (powerup.radius + pulseSize);
-            const outerY = Math.sin(angle) * (powerup.radius + pulseSize);
-            if (i === 0) {
-                ctx.moveTo(outerX, outerY);
-            } else {
-                ctx.lineTo(outerX, outerY);
-            }
+        if (powerup.type === 'forceField') {
+            // Draw force field powerup as a blue circle with inner circle
+            ctx.strokeStyle = 'blue';
+            ctx.beginPath();
+            ctx.arc(0, 0, powerup.radius + pulseSize, 0, Math.PI * 2);
+            ctx.stroke();
             
-            const innerAngle = ((i + 0.5) * 2 * Math.PI / 5) - Math.PI / 2;
-            const innerRadius = (powerup.radius + pulseSize) * 0.5;
-            const innerX = Math.cos(innerAngle) * innerRadius;
-            const innerY = Math.sin(innerAngle) * innerRadius;
-            ctx.lineTo(innerX, innerY);
+            // Draw inner circle
+            ctx.beginPath();
+            ctx.arc(0, 0, (powerup.radius + pulseSize) * 0.6, 0, Math.PI * 2);
+            ctx.stroke();
+        } else {
+            // Draw bullet size powerup as a star shape
+            ctx.beginPath();
+            for (let i = 0; i < 5; i++) {
+                const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
+                const outerX = Math.cos(angle) * (powerup.radius + pulseSize);
+                const outerY = Math.sin(angle) * (powerup.radius + pulseSize);
+                if (i === 0) {
+                    ctx.moveTo(outerX, outerY);
+                } else {
+                    ctx.lineTo(outerX, outerY);
+                }
+                
+                const innerAngle = ((i + 0.5) * 2 * Math.PI / 5) - Math.PI / 2;
+                const innerRadius = (powerup.radius + pulseSize) * 0.5;
+                const innerX = Math.cos(innerAngle) * innerRadius;
+                const innerY = Math.sin(innerAngle) * innerRadius;
+                ctx.lineTo(innerX, innerY);
+            }
+            ctx.closePath();
+            ctx.stroke();
         }
-        ctx.closePath();
-        ctx.stroke();
         ctx.restore();
     }
 }
@@ -1954,6 +2038,28 @@ function drawShipAtCenter() {
     ctx.lineTo(-10, 7); // Rear right
     ctx.closePath();
     ctx.stroke();
+    
+    ctx.restore();
+}
+
+// Draw force field around ship
+function drawForceField() {
+    if (!forceFieldActive || forceFieldLifetime <= 0) return;
+    
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    
+    // Calculate alpha based on remaining lifetime (pulse effect)
+    const alpha = 0.3 + 0.2 * Math.sin(forceFieldLifetime / 10);
+    
+    // Draw force field circle
+    ctx.strokeStyle = `rgba(0, 100, 255, ${alpha})`;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 3]); // Dashed line
+    ctx.beginPath();
+    ctx.arc(0, 0, forceFieldRadius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]); // Reset line dash
     
     ctx.restore();
 }
