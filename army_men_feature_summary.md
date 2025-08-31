@@ -1,7 +1,7 @@
 # Army Men Feature Implementation
 
 ## Overview
-Added army men that chase the player in the asteroids game. These are enemy soldiers that spawn at the edges of the screen and pursue the player.
+Added army men that chase the player in the asteroids game. These are enemy soldiers that spawn in groups and pursue the player.
 
 ## Implementation Details
 
@@ -14,8 +14,9 @@ Added army men that chase the player in the asteroids game. These are enemy sold
   - Speed properties (speed: 1.5, maxSpeed: 2.5)
 
 ### 2. Spawning
-- Added `createArmyMan()` function to spawn army men at screen edges
-- Added `spawnArmyMen()` function to periodically spawn new army men (1/300 chance per frame)
+- Added `createArmyMan()` function to spawn individual army men at screen edges
+- Added `createArmyMenGroup()` function to create groups of army men
+- Two groups of 5 army men each are created at game start
 
 ### 3. Movement
 - Added `updateArmyMen()` function that makes army men chase the player
@@ -39,10 +40,11 @@ Added army men that chase the player in the asteroids game. These are enemy sold
 - `script.js` - Main game implementation
 - `test_army_men.js` - Test script for army men functionality
 - `test_army_men.html` - Test HTML file
+- `army_men_feature_summary.md` - This file
 
 ## How to Test
 1. Open `test_army_men.html` in a browser
 2. Click "START TEST"
-3. Army men will spawn and chase the player ship
+3. Two groups of 5 army men will spawn and chase the player ship
 4. Shoot army men to earn points
 5. Avoid collisions with army men to preserve lives

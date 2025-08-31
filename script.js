@@ -205,8 +205,9 @@ function resetGame() {
     createTurret(canvas.width / 2 - 100, canvas.height / 2 - 100); // Bottom-right corner
     createTurret(-canvas.width / 2 + 100, canvas.height / 2 - 100); // Bottom-left corner
     
-    // Create initial army men
-    createArmyMan(); // Create first army man
+    // Create two groups of 5 army men each
+    createArmyMenGroup(5); // First group
+    createArmyMenGroup(5); // Second group
     
     score = 0;
     lives = 3;
@@ -361,6 +362,13 @@ function createArmyMan(x = null, y = null) {
     armyMen.push(armyMan);
 }
 
+// Create a group of army men
+function createArmyMenGroup(count) {
+    for (let i = 0; i < count; i++) {
+        createArmyMan();
+    }
+}
+
 // Main game loop
 function gameLoop() {
     if (gameStarted && !gameOver) {
@@ -394,6 +402,9 @@ function update() {
     
     // Update turrets
     updateTurrets();
+    
+    // Update army men
+    updateArmyMen();
     
     // Update particles
     updateParticles();
@@ -754,14 +765,6 @@ function updateArmyMen() {
         if (armyMan.x > rightEdge) armyMan.x = leftEdge;
         if (armyMan.y < topEdge) armyMan.y = bottomEdge;
         if (armyMan.y > bottomEdge) armyMan.y = topEdge;
-    }
-}
-
-// Spawn new army men periodically
-function spawnArmyMen() {
-    // Spawn a new army man every 5 seconds (300 frames at 60fps)
-    if (Math.random() < 1/300) {
-        createArmyMan();
     }
 }
 

@@ -9,26 +9,25 @@ function testArmyMenCreation() {
         console.log('Current army men count:', armyMen.length);
         
         // Check if army men creation function works
-        if (typeof createArmyMan !== 'undefined') {
-            console.log('Testing army men creation...');
+        if (typeof createArmyMenGroup !== 'undefined') {
+            console.log('Testing army men group creation...');
             
-            // Create several army men
+            // Create two groups of 5 army men each
             const initialArmyMenCount = armyMen.length;
-            for (let i = 0; i < 5; i++) {
-                createArmyMan();
-            }
+            createArmyMenGroup(5); // First group
+            createArmyMenGroup(5); // Second group
             
             setTimeout(() => {
-                console.log('After creating 5 army men:');
+                console.log('After creating 2 groups of 5 army men:');
                 console.log('Army men count:', armyMen.length);
                 
                 const newArmyMen = armyMen.length - initialArmyMenCount;
                 console.log('New army men created:', newArmyMen);
                 
-                if (newArmyMen > 0) {
-                    console.log('✓ Army men are being created successfully');
+                if (newArmyMen === 10) {
+                    console.log('✓ Army men groups are being created successfully');
                 } else {
-                    console.log('! No army men created in this test');
+                    console.log('! Expected 10 new army men, got', newArmyMen);
                 }
                 
                 // Test army men rendering
@@ -66,11 +65,11 @@ function testArmyMenRendering() {
 function testArmyMenMovement() {
     console.log('Testing army men movement...');
     
-    // Check if spawnArmyMen function exists
-    if (typeof spawnArmyMen !== 'undefined') {
-        console.log('✓ spawnArmyMen function exists');
+    // Check if createArmyMenGroup function exists
+    if (typeof createArmyMenGroup !== 'undefined') {
+        console.log('✓ createArmyMenGroup function exists');
     } else {
-        console.log('✗ spawnArmyMen function does not exist');
+        console.log('✗ createArmyMenGroup function does not exist');
     }
 }
 
