@@ -17,6 +17,7 @@ let asteroids = [];
 let bullets = [];
 let particles = [];
 let mines = [];
+let turrets = []; // Array to hold turrets
 let score = 0;
 let lives = 3;
 let highScore = 0;
@@ -194,6 +195,11 @@ function resetGame() {
     bullets = [];
     particles = [];
     mines = [];
+    turrets = []; // Reset turrets
+    
+    // Create a stationary turret
+    createTurret();
+    
     score = 0;
     lives = 3;
     gameOver = false;
@@ -280,6 +286,22 @@ function createAsteroid(size = 3, x = null, y = null) {
     }
 }
 
+// Create a stationary turret
+function createTurret() {
+    // Position the turret at a fixed location (e.g., top-right corner)
+    const turret = {
+        x: canvas.width / 2 - 100, // Slightly left of right edge
+        y: -canvas.height / 2 + 100, // Slightly below top edge
+        radius: 15,
+        shootCooldown: 0,
+        maxShootCooldown: 360, // 6 seconds at 60fps
+        shotsFired: 0, // Track number of shots fired in current sequence
+        maxShots: 2 // Fire twice per sequence
+    };
+    
+    turrets.push(turret);
+}
+
 // Main game loop
 function gameLoop() {
     if (gameStarted && !gameOver) {
@@ -310,6 +332,9 @@ function update() {
     
     // Update mines
     updateMines();
+    
+    // Update turrets
+    updateTurrets();
     
     // Update particles
     updateParticles();
@@ -415,6 +440,29 @@ function fireBullet() {
     });
 }
 
+// Fire a bullet from a turret
+function fireTurretBullet(turret, angle) {
+    // Calculate bullet starting position (at the turret)
+    const startX = turret.x;
+    const startY = turret.y;
+    
+    // Calculate bullet velocity (toward the ship)
+    const speed = 7; // Turret bullets are slightly slower than player bullets
+    const velocityX = Math.cos(angle) * speed;
+    const velocityY = Math.sin(angle) * speed;
+    
+    // Create bullet
+    bullets.push({
+        x: startX,
+        y: startY,
+        radius: 2,
+        velocity: { x: velocityX, y: velocityY },
+        age: 0,
+        maxAge: 180, // Turret bullets last longer than player bullets
+        isTurretBullet: true // Mark as turret bullet for collision detection
+    });
+}
+
 // Update ship position (keep at center) and apply friction to velocity
 function updateShip() {
     // Apply friction
@@ -455,6 +503,12 @@ function updateShip() {
     for (const particle of particles) {
         particle.x -= ship.velocity.x;
         particle.y -= ship.velocity.y;
+    }
+    
+    // Turrets are stationary, so they move with the world
+    for (const turret of turrets) {
+        turret.x -= ship.velocity.x;
+        turret.y -= ship.velocity.y;
     }
 }
 
@@ -519,6 +573,39 @@ function updateMines() {
     }
 }
 
+// Update turret positions and shooting
+function updateTurrets() {
+    for (const turret of turrets) {
+        // Update shoot cooldown
+        if (turret.shootCooldown > 0) {
+            turret.shootCooldown--;
+        }
+        
+        // Check if turret can shoot (cooldown is over and ship is visible)
+        if (turret.shootCooldown <= 0 && ship.visible) {
+            // Calculate angle to ship
+            const dx = ship.x - turret.x;
+            const dy = ship.y - turret.y;
+            const angle = Math.atan2(dy, dx);
+            
+            // Fire bullet
+            fireTurretBullet(turret, angle);
+            
+            // Increment shots fired
+            turret.shotsFired++;
+            
+            // If we've fired both shots, reset the sequence and start cooldown
+            if (turret.shotsFired >= turret.maxShots) {
+                turret.shotsFired = 0;
+                turret.shootCooldown = turret.maxShootCooldown;
+            } else {
+                // Short delay between shots in the same sequence (e.g., 0.5 seconds)
+                turret.shootCooldown = 30; // 0.5 seconds at 60fps
+            }
+        }
+    }
+}
+
 // Update particle positions and remove dead particles
 function updateParticles() {
     for (let i = particles.length - 1; i >= 0; i--) {
@@ -553,9 +640,11 @@ function checkCollisions() {
                 // Create explosion particles
                 createExplosion(asteroid.x, asteroid.y, false);
                 
-                // Increase score
-                score += 10 * asteroid.size;
-                if (scoreValue) scoreValue.textContent = score;
+                // Increase score (only if it's a player bullet)
+                if (!bullet.isTurretBullet) {
+                    score += 10 * asteroid.size;
+                    if (scoreValue) scoreValue.textContent = score;
+                }
                 
                 // Remove bullet and asteroid
                 bullets.splice(i, 1);
@@ -613,9 +702,11 @@ function checkCollisions() {
                 // Remove the mine that was hit
                 mines.splice(j, 1);
                 
-                // Increase score
-                score += 15 * mine.size; // Mines are worth more points
-                if (scoreValue) scoreValue.textContent = score;
+                // Increase score (only if it's a player bullet)
+                if (!bullet.isTurretBullet) {
+                    score += 15 * mine.size; // Mines are worth more points
+                    if (scoreValue) scoreValue.textContent = score;
+                }
                 
                 // Check for objects within explosion radius
                 checkMineExplosion(mine.x, mine.y, explosionRadius);
@@ -705,6 +796,42 @@ function checkCollisions() {
                 
                 // Process only one collision per frame
                 break;
+            }
+        }
+        
+        // Check for ship-turret bullet collisions (only if ship is not invincible and visible)
+        for (let i = 0; i < bullets.length; i++) {
+            const bullet = bullets[i];
+            
+            // Only check turret bullets
+            if (bullet.isTurretBullet) {
+                if (distance(0, 0, bullet.x, bullet.y) < ship.radius + bullet.radius) {
+                    // Create explosion particles for ship
+                    createExplosion(0, 0, false);
+                    
+                    // Remove the bullet
+                    bullets.splice(i, 1);
+                    
+                    // Lose a life
+                    lives--;
+                    if (livesValue) livesValue.textContent = lives;
+                    
+                    // Reset ship velocity to zero
+                    ship.velocity.x = 0;
+                    ship.velocity.y = 0;
+                    
+                    // Check for game over
+                    if (lives <= 0) {
+                        endGame();
+                    } else {
+                        // Make ship invisible for 2 seconds (120 frames at 60fps)
+                        ship.visible = false;
+                        ship.respawnTime = 120;
+                    }
+                    
+                    // Process only one collision per frame
+                    break;
+                }
             }
         }
     }
@@ -885,6 +1012,9 @@ function render() {
         // Draw mines
         drawMines();
         
+        // Draw turrets
+        drawTurrets();
+        
         // Draw ship at the center of the screen
         drawShipAtCenter();
     }
@@ -989,6 +1119,28 @@ function drawMines() {
         ctx.stroke();
     }
     ctx.setLineDash([]); // Reset line dash
+}
+
+// Draw all turrets
+function drawTurrets() {
+    ctx.strokeStyle = 'green';
+    ctx.lineWidth = 2;
+    for (const turret of turrets) {
+        // Calculate screen position relative to ship
+        const screenX = turret.x - ship.x + canvas.width / 2;
+        const screenY = turret.y - ship.y + canvas.height / 2;
+        
+        // Draw turret as a square
+        ctx.beginPath();
+        ctx.rect(screenX - turret.radius, screenY - turret.radius, turret.radius * 2, turret.radius * 2);
+        ctx.stroke();
+        
+        // Draw a small indicator for the front of the turret
+        ctx.beginPath();
+        ctx.moveTo(screenX, screenY);
+        ctx.lineTo(screenX + turret.radius, screenY);
+        ctx.stroke();
+    }
 }
 
 // Draw the player ship at the center of the screen
