@@ -18,6 +18,7 @@ let bullets = [];
 let particles = [];
 let mines = [];
 let turrets = []; // Array to hold turrets
+let armyMen = []; // Array to hold army men
 let score = 0;
 let lives = 3;
 let highScore = 0;
@@ -196,12 +197,16 @@ function resetGame() {
     particles = [];
     mines = [];
     turrets = []; // Reset turrets
+    armyMen = []; // Reset army men
     
     // Create stationary turrets
     createTurret(); // Top-right corner
     createTurret(-canvas.width / 2 + 100, -canvas.height / 2 + 100); // Top-left corner
     createTurret(canvas.width / 2 - 100, canvas.height / 2 - 100); // Bottom-right corner
     createTurret(-canvas.width / 2 + 100, canvas.height / 2 - 100); // Bottom-left corner
+    
+    // Create initial army men
+    createArmyMan(); // Create first army man
     
     score = 0;
     lives = 3;
@@ -309,6 +314,51 @@ function createTurret(x = null, y = null) {
     };
     
     turrets.push(turret);
+}
+
+// Create an army man that chases the player
+function createArmyMan(x = null, y = null) {
+    // If position not specified, create at random edge relative to ship position
+    if (x === null || y === null) {
+        const side = Math.floor(Math.random() * 4);
+        const buffer = 200; // Distance from screen edge
+        
+        switch (side) {
+            case 0: // Top
+                x = (Math.random() * canvas.width - canvas.width / 2);
+                y = - canvas.height / 2 - buffer;
+                break;
+            case 1: // Right
+                x = canvas.width / 2 + buffer;
+                y = (Math.random() * canvas.height - canvas.height / 2);
+                break;
+            case 2: // Bottom
+                x = (Math.random() * canvas.width - canvas.width / 2);
+                y = canvas.height / 2 + buffer;
+                break;
+            case 3: // Left
+                x = - canvas.width / 2 - buffer;
+                y = (Math.random() * canvas.height - canvas.height / 2);
+                break;
+        }
+    }
+    
+    // Random velocity for initial movement
+    const speed = Math.random() * 1 + 0.5;
+    const angle = Math.random() * Math.PI * 2;
+    const velocityX = Math.cos(angle) * speed;
+    const velocityY = Math.sin(angle) * speed;
+    
+    const armyMan = {
+        x: x,
+        y: y,
+        radius: 8,
+        velocity: { x: velocityX, y: velocityY },
+        speed: 1.5, // Speed at which they chase the player
+        maxSpeed: 2.5 // Maximum speed
+    };
+    
+    armyMen.push(armyMan);
 }
 
 // Main game loop
@@ -519,6 +569,12 @@ function updateShip() {
         turret.x -= ship.velocity.x;
         turret.y -= ship.velocity.y;
     }
+    
+    // Army men move with the world
+    for (const armyMan of armyMen) {
+        armyMan.x -= ship.velocity.x;
+        armyMan.y -= ship.velocity.y;
+    }
 }
 
 // Update bullet positions and remove off-screen bullets
@@ -653,6 +709,59 @@ function updateTurrets() {
                 turret.shootCooldown = 30; // 0.5 seconds at 60fps
             }
         }
+    }
+}
+
+// Update army men positions to chase the player
+function updateArmyMen() {
+    for (let i = armyMen.length - 1; i >= 0; i--) {
+        const armyMan = armyMen[i];
+        
+        // Calculate direction to player (ship is at 0,0 in world coordinates)
+        const dx = ship.x - armyMan.x;
+        const dy = ship.y - armyMan.y;
+        const distanceToPlayer = Math.sqrt(dx * dx + dy * dy);
+        
+        // Normalize direction vector
+        if (distanceToPlayer > 0) {
+            const directionX = dx / distanceToPlayer;
+            const directionY = dy / distanceToPlayer;
+            
+            // Apply acceleration toward player
+            armyMan.velocity.x += directionX * 0.05;
+            armyMan.velocity.y += directionY * 0.05;
+            
+            // Limit maximum speed
+            const speed = Math.sqrt(armyMan.velocity.x * armyMan.velocity.x + armyMan.velocity.y * armyMan.velocity.y);
+            if (speed > armyMan.maxSpeed) {
+                armyMan.velocity.x = (armyMan.velocity.x / speed) * armyMan.maxSpeed;
+                armyMan.velocity.y = (armyMan.velocity.y / speed) * armyMan.maxSpeed;
+            }
+        }
+        
+        // Update position
+        armyMan.x += armyMan.velocity.x;
+        armyMan.y += armyMan.velocity.y;
+        
+        // Screen wrapping
+        const buffer = 100; // Distance from screen edge
+        const leftEdge = - canvas.width / 2 - buffer;
+        const rightEdge = canvas.width / 2 + buffer;
+        const topEdge = - canvas.height / 2 - buffer;
+        const bottomEdge = canvas.height / 2 + buffer;
+        
+        if (armyMan.x < leftEdge) armyMan.x = rightEdge;
+        if (armyMan.x > rightEdge) armyMan.x = leftEdge;
+        if (armyMan.y < topEdge) armyMan.y = bottomEdge;
+        if (armyMan.y > bottomEdge) armyMan.y = topEdge;
+    }
+}
+
+// Spawn new army men periodically
+function spawnArmyMen() {
+    // Spawn a new army man every 5 seconds (300 frames at 60fps)
+    if (Math.random() < 1/300) {
+        createArmyMan();
     }
 }
 
@@ -800,6 +909,30 @@ function checkCollisions() {
                 return;
             }
         }
+        
+        // Check bullet-army man collisions
+        for (let j = 0; j < armyMen.length; j++) {
+            const armyMan = armyMen[j];
+            
+            // Check collision
+            if (distance(bullet.x, bullet.y, armyMan.x, armyMan.y) < bullet.radius + armyMan.radius) {
+                // Create explosion particles
+                createExplosion(armyMan.x, armyMan.y, false);
+                
+                // Increase score (only if it's a player bullet)
+                if (!bullet.isTurretBullet) {
+                    score += 25; // Army men are worth 25 points
+                    if (scoreValue) scoreValue.textContent = score;
+                }
+                
+                // Remove bullet and army man
+                bullets.splice(i, 1);
+                armyMen.splice(j, 1);
+                
+                // Process only one collision per frame
+                return;
+            }
+        }
     }
     
     // Check for ship-asteroid collisions (only if ship is not invincible and visible)
@@ -868,6 +1001,44 @@ function checkCollisions() {
                 
                 // Check for objects within explosion radius
                 checkMineExplosion(mine.x, mine.y, explosionRadius);
+                
+                // Check for game over
+                if (lives <= 0) {
+                    endGame();
+                } else {
+                    // Make ship invisible for 2 seconds (120 frames at 60fps)
+                    ship.visible = false;
+                    ship.respawnTime = 120;
+                }
+                
+                // Process only one collision per frame
+                break;
+            }
+        }
+        
+        // Check for ship-army man collisions (only if ship is not invincible and visible)
+        for (let i = 0; i < armyMen.length; i++) {
+            const armyMan = armyMen[i];
+            
+            if (distance(0, 0, armyMan.x, armyMan.y) < ship.radius + armyMan.radius) {
+                // Create explosion particles for both ship and army man
+                createExplosion(0, 0, false); // Ship explosion
+                createExplosion(armyMan.x, armyMan.y, false); // Army man explosion
+                
+                // Increase score for destroying the army man
+                score += 25; // Army men are worth 25 points
+                if (scoreValue) scoreValue.textContent = score;
+                
+                // Remove the army man that was collided with
+                armyMen.splice(i, 1);
+                
+                // Lose a life
+                lives--;
+                if (livesValue) livesValue.textContent = lives;
+                
+                // Reset ship velocity to zero
+                ship.velocity.x = 0;
+                ship.velocity.y = 0;
                 
                 // Check for game over
                 if (lives <= 0) {
@@ -1099,6 +1270,9 @@ function render() {
         // Draw turrets
         drawTurrets();
         
+        // Draw army men
+        drawArmyMen();
+        
         // Draw ship at the center of the screen
         drawShipAtCenter();
     }
@@ -1224,6 +1398,36 @@ function drawTurrets() {
         ctx.moveTo(screenX, screenY);
         ctx.lineTo(screenX + turret.radius, screenY);
         ctx.stroke();
+    }
+}
+
+// Draw all army men
+function drawArmyMen() {
+    ctx.strokeStyle = 'red';
+    ctx.lineWidth = 2;
+    for (const armyMan of armyMen) {
+        // Calculate screen position relative to ship
+        const screenX = armyMan.x - ship.x + canvas.width / 2;
+        const screenY = armyMan.y - ship.y + canvas.height / 2;
+        
+        // Draw army man as a small triangle pointing toward the player
+        ctx.save();
+        ctx.translate(screenX, screenY);
+        
+        // Calculate angle to player for rotation
+        const dx = ship.x - armyMan.x;
+        const dy = ship.y - armyMan.y;
+        const angle = Math.atan2(dy, dx);
+        ctx.rotate(angle);
+        
+        // Draw a triangle
+        ctx.beginPath();
+        ctx.moveTo(armyMan.radius, 0);
+        ctx.lineTo(-armyMan.radius, -armyMan.radius/1.5);
+        ctx.lineTo(-armyMan.radius, armyMan.radius/1.5);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.restore();
     }
 }
 
