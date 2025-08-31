@@ -6,9 +6,11 @@ const startButton = document.getElementById('startButton');
 const gameOverScreen = document.getElementById('gameOverScreen');
 const finalScoreElement = document.getElementById('finalScore');
 const finalHighScoreElement = document.getElementById('finalHighScore');
+const finalWaveElement = document.getElementById('finalWave');
 const restartButton = document.getElementById('restartButton');
 const scoreValue = document.getElementById('scoreValue');
 const livesValue = document.getElementById('livesValue');
+const waveValue = document.getElementById('waveValue');
 const highScoreValue = document.getElementById('highScoreValue');
 
 // Game state
@@ -27,6 +29,9 @@ let highScore = 0;
 let gameOver = false;
 let gameStarted = false;
 let bulletSizeMultiplier = 1.0; // Powerup effect for bullet size
+let waveNumber = 1; // Track current wave
+let waveTimer = 0; // Timer for wave progression
+let maxWaveTimer = 1800; // 30 seconds at 60fps for next wave
 
 // Input state
 let thrust = false;
@@ -204,6 +209,8 @@ function resetGame() {
     powerups = []; // Reset powerups
     roses = []; // Reset roses
     bulletSizeMultiplier = 1.0; // Reset bullet size multiplier
+    waveNumber = 1; // Reset wave number
+    waveTimer = 0; // Reset wave timer
     
     // Create initial asteroids
     createAsteroids(3);
@@ -262,9 +269,9 @@ function createAsteroids(count) {
 }
 
 // Create a single asteroid
-function createAsteroid(size = 3, x = null, y = null) {
-    // Randomly decide if this should be a mine (30% chance)
-    const isMine = Math.random() < 0.3;
+function createAsteroid(size = 3, x = null, y = null, forceMine = false) {
+    // Randomly decide if this should be a mine (30% chance) unless forced
+    const isMine = forceMine || Math.random() < 0.3;
     
     // If position not specified, create at random edge relative to ship position
     if (x === null || y === null) {
@@ -571,6 +578,12 @@ function update() {
     
     // Update particles
     updateParticles();
+    
+    // Update wave system
+    updateWaves();
+    
+    // Update UI
+    if (waveValue) waveValue.textContent = waveNumber;
     
     // Check collisions
     checkCollisions();
@@ -1078,6 +1091,74 @@ function updateParticles() {
             particles.splice(i, 1);
         }
     }
+}
+
+// Update wave system
+function updateWaves() {
+    if (!gameStarted || gameOver) return;
+    
+    // Increment wave timer
+    waveTimer++;
+    
+    // Calculate current max wave timer (decreases as game progresses)
+    const currentMaxWaveTimer = Math.max(600, maxWaveTimer - (waveNumber * 30)); // Minimum 10 seconds
+    
+    // Check if it's time for a new wave
+    if (waveTimer >= currentMaxWaveTimer) {
+        waveTimer = 0;
+        waveNumber++;
+        
+        // Spawn new enemies based on wave number
+        spawnWaveEnemies();
+        
+        // Update UI
+        if (waveValue) waveValue.textContent = waveNumber;
+    }
+    
+    // Also spawn enemies if all are destroyed (existing behavior)
+    if (asteroids.length === 0 && mines.length === 0) {
+        setTimeout(() => {
+            if (asteroids.length === 0 && mines.length === 0 && !gameOver) {
+                createAsteroids(3);
+            }
+        }, 100);
+    }
+}
+
+// Spawn enemies for current wave
+function spawnWaveEnemies() {
+    // Create asteroids (increase count with wave number)
+    const asteroidCount = 2 + Math.min(5, Math.floor(waveNumber / 2)); // Up to 7 asteroids
+    createAsteroids(asteroidCount);
+    
+    // Create mines (increase count with wave number)
+    const mineCount = Math.min(3, Math.floor(waveNumber / 3));
+    for (let i = 0; i < mineCount; i++) {
+        createAsteroid(3, null, null, true); // Create large mines
+    }
+    
+    // Create army men groups (increase frequency with wave number)
+    if (waveNumber % 2 === 0) {
+        const armyMenCount = 3 + Math.min(4, Math.floor(waveNumber / 4)); // Up to 7 army men per group
+        createArmyMenGroup(armyMenCount);
+    }
+    
+    // Create turrets (add new ones periodically)
+    if (waveNumber % 3 === 0) {
+        createTurret(); // Add one new turret
+    }
+    
+    // Create powerups (more frequent as game progresses)
+    if (waveNumber % 2 === 1 || Math.random() < 0.3) {
+        createPowerup();
+    }
+    
+    // Create roses (add new ones periodically)
+    if (waveNumber % 5 === 0) {
+        createRose(); // Add one new rose
+    }
+    
+    console.log(`Wave ${waveNumber} spawned with ${asteroidCount} asteroids, ${mineCount} mines`);
 }
 
 // Check for collisions between bullets and asteroids/mines, and ship and asteroids/mines
@@ -1959,6 +2040,7 @@ function endGame() {
     saveHighScore();
     if (finalScoreElement) finalScoreElement.textContent = score;
     if (finalHighScoreElement) finalHighScoreElement.textContent = highScore;
+    if (finalWaveElement) finalWaveElement.textContent = waveNumber;
     if (gameOverScreen) {
         console.log('Showing game over screen');
         gameOverScreen.classList.add('show');
