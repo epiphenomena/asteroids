@@ -476,7 +476,7 @@ function createArmyMan(x = null, y = null) {
     const armyMan = {
         x: x,
         y: y,
-        radius: 8,
+        radius: 12, // Increased from 8 to 12 for larger hitbox
         velocity: { x: velocityX, y: velocityY },
         speed: 1.95, // 30% faster (1.5 * 1.3 = 1.95)
         maxSpeed: 3.25 // 30% faster (2.5 * 1.3 = 3.25)
@@ -1901,7 +1901,7 @@ function drawArmyMen() {
         const screenX = armyMan.x - ship.x + canvas.width / 2;
         const screenY = armyMan.y - ship.y + canvas.height / 2;
         
-        // Draw army man as a small triangle pointing toward the player
+        // Draw army man as a larger triangle pointing toward the player
         ctx.save();
         ctx.translate(screenX, screenY);
         
@@ -1911,7 +1911,7 @@ function drawArmyMen() {
         const angle = Math.atan2(dy, dx);
         ctx.rotate(angle);
         
-        // Draw a triangle
+        // Draw a larger triangle (increased from radius 8 to 12)
         ctx.beginPath();
         ctx.moveTo(armyMan.radius, 0);
         ctx.lineTo(-armyMan.radius, -armyMan.radius/1.5);
