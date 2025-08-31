@@ -1278,6 +1278,9 @@ function render() {
         
         // Draw ship at the center of the screen
         drawShipAtCenter();
+        
+        // Draw radar indicators for off-screen objects
+        drawRadarIndicators();
     }
 }
 
@@ -1462,6 +1465,81 @@ function drawShipAtCenter() {
     ctx.closePath();
     ctx.stroke();
     
+    ctx.restore();
+}
+
+// Draw radar indicators for off-screen objects
+function drawRadarIndicators() {
+    // Draw indicators for asteroids
+    for (const asteroid of asteroids) {
+        drawRadarIndicator(asteroid.x, asteroid.y, 'white');
+    }
+    
+    // Draw indicators for mines
+    for (const mine of mines) {
+        drawRadarIndicator(mine.x, mine.y, 'red');
+    }
+    
+    // Draw indicators for turrets
+    for (const turret of turrets) {
+        drawRadarIndicator(turret.x, turret.y, 'green');
+    }
+    
+    // Draw indicators for army men
+    for (const armyMan of armyMen) {
+        drawRadarIndicator(armyMan.x, armyMan.y, 'red');
+    }
+}
+
+// Draw a radar indicator for an off-screen object
+function drawRadarIndicator(worldX, worldY, color) {
+    // Calculate screen position relative to ship
+    const screenX = worldX - ship.x + canvas.width / 2;
+    const screenY = worldY - ship.y + canvas.height / 2;
+    
+    // Check if object is on screen
+    const margin = 50; // Margin around screen edges
+    if (screenX >= -margin && screenX <= canvas.width + margin && 
+        screenY >= -margin && screenY <= canvas.height + margin) {
+        return; // Object is on screen or very close, no indicator needed
+    }
+    
+    // Calculate direction from center of screen to object
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const dx = screenX - centerX;
+    const dy = screenY - centerY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    // Normalize direction
+    const dirX = dx / distance;
+    const dirY = dy / distance;
+    
+    // Position indicator at edge of screen with some margin
+    const indicatorMargin = 30;
+    let indicatorX = centerX + dirX * (Math.min(canvas.width, canvas.height) / 2 - indicatorMargin);
+    let indicatorY = centerY + dirY * (Math.min(canvas.width, canvas.height) / 2 - indicatorMargin);
+    
+    // Keep indicator within screen bounds with margin
+    indicatorX = Math.max(indicatorMargin, Math.min(canvas.width - indicatorMargin, indicatorX));
+    indicatorY = Math.max(indicatorMargin, Math.min(canvas.height - indicatorMargin, indicatorY));
+    
+    // Draw arrow pointing toward object
+    ctx.save();
+    ctx.translate(indicatorX, indicatorY);
+    ctx.rotate(Math.atan2(dirY, dirX));
+    
+    // Draw arrow
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(15, 0); // Arrow shaft
+    ctx.moveTo(15, 0);
+    ctx.lineTo(10, -5); // Arrowhead
+    ctx.moveTo(15, 0);
+    ctx.lineTo(10, 5); // Arrowhead
+    ctx.stroke();
     ctx.restore();
 }
 
