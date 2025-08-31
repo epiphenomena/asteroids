@@ -275,7 +275,8 @@ function createAsteroid(size = 3, x = null, y = null) {
             radius: radius,
             velocity: { x: velocityX, y: velocityY },
             size: size,
-            type: 'mine' // Distinguish mines from asteroids
+            type: 'mine', // Distinguish mines from asteroids
+            explosionTimer: 0 // Initialize explosion timer
         });
     } else {
         // Create a regular asteroid
@@ -562,7 +563,9 @@ function updateAsteroids() {
 
 // Update mine positions
 function updateMines() {
-    for (const mine of mines) {
+    for (let i = mines.length - 1; i >= 0; i--) {
+        const mine = mines[i];
+        
         // Update position
         mine.x += mine.velocity.x;
         mine.y += mine.velocity.y;
@@ -578,6 +581,45 @@ function updateMines() {
         if (mine.x > rightEdge) mine.x = leftEdge;
         if (mine.y < topEdge) mine.y = bottomEdge;
         if (mine.y > bottomEdge) mine.y = topEdge;
+        
+        // Update mine timer for periodic explosions
+        if (!mine.explosionTimer) {
+            mine.explosionTimer = 0;
+        }
+        
+        mine.explosionTimer++;
+        
+        // Check for asteroids in explosion radius every 300 frames (5 seconds at 60fps)
+        if (mine.explosionTimer >= 300) {
+            mine.explosionTimer = 0;
+            
+            // Check for asteroids within explosion radius
+            const explosionRadius = 100; // Approximately 1 inch at typical screen resolution
+            let asteroidsInRadius = false;
+            
+            for (const asteroid of asteroids) {
+                if (distance(mine.x, mine.y, asteroid.x, asteroid.y) < explosionRadius) {
+                    asteroidsInRadius = true;
+                    break;
+                }
+            }
+            
+            // If asteroids are found in radius, explode the mine
+            if (asteroidsInRadius) {
+                // Create mine explosion that affects nearby objects
+                createExplosion(mine.x, mine.y, true);
+                
+                // Remove the mine that exploded
+                mines.splice(i, 1);
+                
+                // Check for objects within explosion radius
+                checkMineExplosion(mine.x, mine.y, explosionRadius);
+                
+                // Increase score for the mine explosion
+                score += 15 * mine.size; // Mines are worth more points
+                if (scoreValue) scoreValue.textContent = score;
+            }
+        }
     }
 }
 
