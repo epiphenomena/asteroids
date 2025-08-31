@@ -724,6 +724,32 @@ function checkCollisions() {
                 return;
             }
         }
+        
+        // Check bullet-turret collisions
+        for (let j = 0; j < turrets.length; j++) {
+            const turret = turrets[j];
+            
+            // Check collision
+            if (distance(bullet.x, bullet.y, turret.x, turret.y) < bullet.radius + turret.radius) {
+                // Create explosion particles for turret
+                createExplosion(turret.x, turret.y, false);
+                
+                // Increase score (only if it's a player bullet)
+                if (!bullet.isTurretBullet) {
+                    score += 50; // Turrets are worth 50 points
+                    if (scoreValue) scoreValue.textContent = score;
+                }
+                
+                // Remove bullet
+                bullets.splice(i, 1);
+                
+                // Remove the turret that was hit
+                turrets.splice(j, 1);
+                
+                // Process only one collision per frame
+                return;
+            }
+        }
     }
     
     // Check for ship-asteroid collisions (only if ship is not invincible and visible)
