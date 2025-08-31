@@ -215,37 +215,8 @@ function resetGame() {
     forceFieldActive = false; // Reset force field
     forceFieldLifetime = 0; // Reset force field lifetime
     
-    // Create initial asteroids
-    createAsteroids(3);
-    
-    // Create a bunch of turrets (12 total)
-    createTurret(); // Top-right corner
-    createTurret(-canvas.width / 2 + 100, -canvas.height / 2 + 100); // Top-left corner
-    createTurret(canvas.width / 2 - 100, canvas.height / 2 - 100); // Bottom-right corner
-    createTurret(-canvas.width / 2 + 100, canvas.height / 2 - 100); // Bottom-left corner
-    
-    // Additional turrets around the edges
-    createTurret(canvas.width / 4, -canvas.height / 2 + 50); // Top edge
-    createTurret(-canvas.width / 4, -canvas.height / 2 + 50); // Top edge
-    createTurret(canvas.width / 4, canvas.height / 2 - 50); // Bottom edge
-    createTurret(-canvas.width / 4, canvas.height / 2 - 50); // Bottom edge
-    createTurret(canvas.width / 2 - 50, canvas.height / 4); // Right edge
-    createTurret(canvas.width / 2 - 50, -canvas.height / 4); // Right edge
-    createTurret(-canvas.width / 2 + 50, canvas.height / 4); // Left edge
-    createTurret(-canvas.width / 2 + 50, -canvas.height / 4); // Left edge
-    
-    // Create two groups of 5 army men each
-    createArmyMenGroup(5); // First group
-    createArmyMenGroup(5); // Second group
-    
-    // Create initial powerups
-    createPowerup(); // Create first bullet size powerup
-    createPowerup(); // Create second bullet size powerup
-    createPowerup(); // Create third bullet size powerup
-    createForceFieldPowerup(); // Create first force field powerup
-    
-    // Create a rose
-    createRose();
+    // Spawn initial wave enemies
+    spawnWaveEnemies();
     
     score = 0;
     lives = 3;
@@ -260,9 +231,6 @@ function resetGame() {
         gameOverScreen.classList.remove('show');
         gameOverScreen.style.display = 'none';
     }
-    
-    // Create initial asteroids
-    createAsteroids(3);
 }
 
 // Create a specified number of asteroids
