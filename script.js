@@ -547,8 +547,14 @@ function createRose(x = null, y = null) {
         poisonCooldown: 0,
         maxPoisonCooldown: 300, // 5 seconds at 60fps
         poisonBullets: [], // Roses have their own poison bullets
-        poisonSpread: true // New flag for multi-directional shooting
+        petalCount: 8, // Number of petals
+        petalAngles: [] // Current angles of petals for rotation effect
     };
+    
+    // Initialize petal angles
+    for (let i = 0; i < rose.petalCount; i++) {
+        rose.petalAngles.push(i * Math.PI * 2 / rose.petalCount);
+    }
     
     roses.push(rose);
 }
@@ -1022,11 +1028,16 @@ function updateRoses() {
             rose.poisonCooldown--;
         }
         
-        // Shoot poison bullets in all directions when cooldown is ready
+        // Update petal angles for rotation effect
+        for (let i = 0; i < rose.petalAngles.length; i++) {
+            rose.petalAngles[i] += 0.01; // Slow rotation
+        }
+        
+        // Shoot poison bullets from each petal when cooldown is ready
         if (rose.poisonCooldown <= 0) {
-            // Shoot poison bullets in 8 directions (every 45 degrees)
-            for (let i = 0; i < 8; i++) {
-                const angle = (i * Math.PI * 2) / 8; // 8 directions around the circle
+            // Shoot poison bullets from each petal
+            for (let i = 0; i < rose.petalCount; i++) {
+                const angle = rose.petalAngles[i];
                 fireRosePoisonBullet(rose, angle);
             }
             
@@ -1979,14 +1990,15 @@ function drawRoses() {
         ctx.arc(screenX, screenY, rose.radius, 0, Math.PI * 2);
         ctx.stroke();
         
-        // Draw simple petals
-        for (let i = 0; i < 8; i++) {
-            const angle = i * Math.PI / 4;
-            const petalX = screenX + Math.cos(angle) * rose.radius * 1.5;
-            const petalY = screenY + Math.sin(angle) * rose.radius * 1.5;
+        // Draw rotating petals
+        for (let i = 0; i < rose.petalCount; i++) {
+            const angle = rose.petalAngles[i];
+            const petalDistance = rose.radius * 1.5;
+            const petalX = screenX + Math.cos(angle) * petalDistance;
+            const petalY = screenY + Math.sin(angle) * petalDistance;
             
             ctx.beginPath();
-            ctx.arc(petalX, petalY, rose.radius * 0.5, 0, Math.PI * 2);
+            ctx.arc(petalX, petalY, rose.radius * 0.7, 0, Math.PI * 2);
             ctx.stroke();
         }
         
