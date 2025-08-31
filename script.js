@@ -355,8 +355,8 @@ function createArmyMan(x = null, y = null) {
         y: y,
         radius: 8,
         velocity: { x: velocityX, y: velocityY },
-        speed: 1.5, // Speed at which they chase the player
-        maxSpeed: 2.5 // Maximum speed
+        speed: 1.95, // 30% faster (1.5 * 1.3 = 1.95)
+        maxSpeed: 3.25 // 30% faster (2.5 * 1.3 = 3.25)
     };
     
     armyMen.push(armyMan);
@@ -738,9 +738,9 @@ function updateArmyMen() {
             const directionX = dx / distanceToPlayer;
             const directionY = dy / distanceToPlayer;
             
-            // Apply acceleration toward player
-            armyMan.velocity.x += directionX * 0.05;
-            armyMan.velocity.y += directionY * 0.05;
+            // Apply acceleration toward player (30% faster)
+            armyMan.velocity.x += directionX * 0.065;
+            armyMan.velocity.y += directionY * 0.065;
             
             // Limit maximum speed
             const speed = Math.sqrt(armyMan.velocity.x * armyMan.velocity.x + armyMan.velocity.y * armyMan.velocity.y);

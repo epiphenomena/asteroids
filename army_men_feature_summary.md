@@ -20,8 +20,8 @@ Added army men that chase the player in the asteroids game. These are enemy sold
 
 ### 3. Movement
 - Added `updateArmyMen()` function that makes army men chase the player
-- Army men accelerate toward the player's position
-- Movement is limited by a maximum speed
+- Army men accelerate toward the player's position (30% faster than original)
+- Movement is limited by a maximum speed (30% faster than original)
 - Army men wrap around screen edges like other game objects
 
 ### 4. Rendering
