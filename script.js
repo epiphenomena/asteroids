@@ -20,6 +20,7 @@ let mines = [];
 let turrets = []; // Array to hold turrets
 let armyMen = []; // Array to hold army men
 let powerups = []; // Array to hold powerups
+let roses = []; // Array to hold roses
 let score = 0;
 let lives = 3;
 let highScore = 0;
@@ -201,6 +202,7 @@ function resetGame() {
     turrets = []; // Reset turrets
     armyMen = []; // Reset army men
     powerups = []; // Reset powerups
+    roses = []; // Reset roses
     bulletSizeMultiplier = 1.0; // Reset bullet size multiplier
     
     // Create initial asteroids
@@ -230,6 +232,9 @@ function resetGame() {
     createPowerup(); // Create first powerup
     createPowerup(); // Create second powerup
     createPowerup(); // Create third powerup
+    
+    // Create a rose
+    createRose();
     
     score = 0;
     lives = 3;
@@ -491,6 +496,29 @@ function createPowerup(x = null, y = null) {
     powerups.push(powerup);
 }
 
+// Create a rose that spits poison
+function createRose(x = null, y = null) {
+    // If position not specified, create at random location
+    if (x === null || y === null) {
+        // Create rose at a random position, but not too close to the center
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 300 + Math.random() * 200; // 300-500 pixels from center
+        x = Math.cos(angle) * distance;
+        y = Math.sin(angle) * distance;
+    }
+    
+    const rose = {
+        x: x,
+        y: y,
+        radius: 15,
+        poisonCooldown: 0,
+        maxPoisonCooldown: 180, // 3 seconds at 60fps
+        poisonBullets: [] // Roses have their own poison bullets
+    };
+    
+    roses.push(rose);
+}
+
 // Create a group of army men
 function createArmyMenGroup(count) {
     for (let i = 0; i < count; i++) {
@@ -537,6 +565,9 @@ function update() {
     
     // Update powerups
     updatePowerups();
+    
+    // Update roses
+    updateRoses();
     
     // Update particles
     updateParticles();
@@ -723,6 +754,18 @@ function updateShip() {
     for (const powerup of powerups) {
         powerup.x -= ship.velocity.x;
         powerup.y -= ship.velocity.y;
+    }
+    
+    // Roses move with the world
+    for (const rose of roses) {
+        rose.x -= ship.velocity.x;
+        rose.y -= ship.velocity.y;
+        
+        // Rose poison bullets also move with the world
+        for (const bullet of rose.poisonBullets) {
+            bullet.x -= ship.velocity.x;
+            bullet.y -= ship.velocity.y;
+        }
     }
 }
 
@@ -926,6 +969,96 @@ function updatePowerups() {
         if (powerup.y < topEdge) powerup.y = bottomEdge;
         if (powerup.y > bottomEdge) powerup.y = topEdge;
     }
+}
+
+// Update roses
+function updateRoses() {
+    for (const rose of roses) {
+        // Update poison cooldown
+        if (rose.poisonCooldown > 0) {
+            rose.poisonCooldown--;
+        }
+        
+        // Shoot poison bullets at army men
+        if (rose.poisonCooldown <= 0 && armyMen.length > 0) {
+            // Find the closest army man
+            let closestArmyMan = null;
+            let closestDistance = Infinity;
+            
+            for (const armyMan of armyMen) {
+                const dx = armyMan.x - rose.x;
+                const dy = armyMan.y - rose.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestArmyMan = armyMan;
+                }
+            }
+            
+            // Only shoot if army man is within range (approximately 5 inches at typical screen resolution)
+            // Assuming 1 inch = 100 pixels, so 5 inches = 500 pixels
+            if (closestArmyMan && closestDistance < 500) {
+                // Calculate angle to army man
+                const dx = closestArmyMan.x - rose.x;
+                const dy = closestArmyMan.y - rose.y;
+                const angle = Math.atan2(dy, dx);
+                
+                // Fire poison bullet
+                fireRosePoisonBullet(rose, angle);
+                
+                // Reset cooldown
+                rose.poisonCooldown = rose.maxPoisonCooldown;
+            }
+        }
+        
+        // Update poison bullets
+        for (let i = rose.poisonBullets.length - 1; i >= 0; i--) {
+            const bullet = rose.poisonBullets[i];
+            
+            // Update position
+            bullet.x += bullet.velocity.x;
+            bullet.y += bullet.velocity.y;
+            
+            // Remove bullets that go off-screen
+            const distance = Math.sqrt(bullet.x * bullet.x + bullet.y * bullet.y);
+            if (distance > Math.max(canvas.width, canvas.height)) {
+                rose.poisonBullets.splice(i, 1);
+            }
+        }
+        
+        // Screen wrapping
+        const buffer = 100; // Distance from screen edge
+        const leftEdge = - canvas.width / 2 - buffer;
+        const rightEdge = canvas.width / 2 + buffer;
+        const topEdge = - canvas.height / 2 - buffer;
+        const bottomEdge = canvas.height / 2 + buffer;
+        
+        if (rose.x < leftEdge) rose.x = rightEdge;
+        if (rose.x > rightEdge) rose.x = leftEdge;
+        if (rose.y < topEdge) rose.y = bottomEdge;
+        if (rose.y > bottomEdge) rose.y = topEdge;
+    }
+}
+
+// Fire a poison bullet from a rose
+function fireRosePoisonBullet(rose, angle) {
+    // Calculate bullet starting position (at the rose)
+    const startX = rose.x;
+    const startY = rose.y;
+    
+    // Calculate bullet velocity (toward the target)
+    const speed = 5; // Poison bullets are slower than regular bullets
+    const velocityX = Math.cos(angle) * speed;
+    const velocityY = Math.sin(angle) * speed;
+    
+    // Create bullet
+    rose.poisonBullets.push({
+        x: startX,
+        y: startY,
+        radius: 3,
+        velocity: { x: velocityX, y: velocityY }
+    });
 }
 
 // Update particle positions and remove dead particles
@@ -1281,6 +1414,36 @@ function checkCollisions() {
             }
         }
     }
+    
+    // Check for rose poison bullet collisions with army men
+    for (const rose of roses) {
+        for (let i = rose.poisonBullets.length - 1; i >= 0; i--) {
+            const bullet = rose.poisonBullets[i];
+            
+            // Check for collisions with army men
+            for (let j = 0; j < armyMen.length; j++) {
+                const armyMan = armyMen[j];
+                
+                if (distance(bullet.x, bullet.y, armyMan.x, armyMan.y) < bullet.radius + armyMan.radius) {
+                    // Create explosion particles for the destroyed army man
+                    createExplosion(armyMan.x, armyMan.y, false);
+                    
+                    // Increase score
+                    score += 25; // Army men are worth 25 points
+                    if (scoreValue) scoreValue.textContent = score;
+                    
+                    // Remove army man
+                    armyMen.splice(j, 1);
+                    
+                    // Remove the bullet
+                    rose.poisonBullets.splice(i, 1);
+                    
+                    // Process only one collision per frame
+                    break;
+                }
+            }
+        }
+    }
 }
 
 // Create explosion particles
@@ -1466,6 +1629,9 @@ function render() {
         
         // Draw powerups
         drawPowerups();
+        
+        // Draw roses
+        drawRoses();
         
         // Draw ship at the center of the screen
         drawShipAtCenter();
@@ -1665,6 +1831,50 @@ function drawPowerups() {
         ctx.closePath();
         ctx.stroke();
         ctx.restore();
+    }
+}
+
+// Draw all roses
+function drawRoses() {
+    ctx.strokeStyle = 'pink';
+    ctx.lineWidth = 2;
+    for (const rose of roses) {
+        // Calculate screen position relative to ship
+        const screenX = rose.x - ship.x + canvas.width / 2;
+        const screenY = rose.y - ship.y + canvas.height / 2;
+        
+        // Draw rose as a circle with petal details
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, rose.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Draw simple petals
+        for (let i = 0; i < 8; i++) {
+            const angle = i * Math.PI / 4;
+            const petalX = screenX + Math.cos(angle) * rose.radius * 1.5;
+            const petalY = screenY + Math.sin(angle) * rose.radius * 1.5;
+            
+            ctx.beginPath();
+            ctx.arc(petalX, petalY, rose.radius * 0.5, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+        
+        // Draw rose poison bullets
+        drawRosePoisonBullets(rose);
+    }
+}
+
+// Draw rose poison bullets
+function drawRosePoisonBullets(rose) {
+    ctx.fillStyle = 'green';
+    for (const bullet of rose.poisonBullets) {
+        // Calculate screen position relative to ship
+        const screenX = bullet.x - ship.x + canvas.width / 2;
+        const screenY = bullet.y - ship.y + canvas.height / 2;
+        
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, bullet.radius, 0, Math.PI * 2);
+        ctx.fill();
     }
 }
 
