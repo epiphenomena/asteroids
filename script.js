@@ -545,8 +545,9 @@ function createRose(x = null, y = null) {
         y: y,
         radius: 15,
         poisonCooldown: 0,
-        maxPoisonCooldown: 180, // 3 seconds at 60fps
-        poisonBullets: [] // Roses have their own poison bullets
+        maxPoisonCooldown: 120, // 2 seconds at 60fps (faster shooting)
+        poisonBullets: [], // Roses have their own poison bullets
+        poisonSpread: true // New flag for multi-directional shooting
     };
     
     roses.push(rose);
@@ -1021,37 +1022,16 @@ function updateRoses() {
             rose.poisonCooldown--;
         }
         
-        // Shoot poison bullets at army men
-        if (rose.poisonCooldown <= 0 && armyMen.length > 0) {
-            // Find the closest army man
-            let closestArmyMan = null;
-            let closestDistance = Infinity;
-            
-            for (const armyMan of armyMen) {
-                const dx = armyMan.x - rose.x;
-                const dy = armyMan.y - rose.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance < closestDistance) {
-                    closestDistance = distance;
-                    closestArmyMan = armyMan;
-                }
-            }
-            
-            // Only shoot if army man is within range (approximately 5 inches at typical screen resolution)
-            // Assuming 1 inch = 100 pixels, so 5 inches = 500 pixels
-            if (closestArmyMan && closestDistance < 500) {
-                // Calculate angle to army man
-                const dx = closestArmyMan.x - rose.x;
-                const dy = closestArmyMan.y - rose.y;
-                const angle = Math.atan2(dy, dx);
-                
-                // Fire poison bullet
+        // Shoot poison bullets in all directions when cooldown is ready
+        if (rose.poisonCooldown <= 0) {
+            // Shoot poison bullets in 8 directions (every 45 degrees)
+            for (let i = 0; i < 8; i++) {
+                const angle = (i * Math.PI * 2) / 8; // 8 directions around the circle
                 fireRosePoisonBullet(rose, angle);
-                
-                // Reset cooldown
-                rose.poisonCooldown = rose.maxPoisonCooldown;
             }
+            
+            // Reset cooldown
+            rose.poisonCooldown = rose.maxPoisonCooldown;
         }
         
         // Update poison bullets
@@ -1089,7 +1069,7 @@ function fireRosePoisonBullet(rose, angle) {
     const startX = rose.x;
     const startY = rose.y;
     
-    // Calculate bullet velocity (toward the target)
+    // Calculate bullet velocity (toward the target angle)
     const speed = 5; // Poison bullets are slower than regular bullets
     const velocityX = Math.cos(angle) * speed;
     const velocityY = Math.sin(angle) * speed;
@@ -1177,11 +1157,10 @@ function spawnWaveEnemies() {
         createAsteroid(3, null, null, true); // Create large mines
     }
     
-    // Create army men groups (3 every 3 waves, increasing by 3 each cycle)
-    // Waves 1-3: 3 army men, Waves 4-6: 6 army men, Waves 7-9: 9 army men, etc.
-    const armyMenCycle = Math.floor((waveNumber - 1) / 3) + 1; // 1 for waves 1-3, 2 for waves 4-6, etc.
-    const armyMenCount = armyMenCycle * 3; // 3, 6, 9, 12, 15, etc.
-    createArmyMenGroup(armyMenCount);
+    // Create army men groups (3 army men every 3 waves)
+    if (waveNumber % 3 === 0) { // Every 3 waves
+        createArmyMenGroup(3); // 3 army men every 3 waves
+    }
     
     // Create turrets (add new ones every 3 waves)
     if (waveNumber > 1 && waveNumber % 3 === 1) { // Start at wave 4, then every 3 waves
@@ -1193,7 +1172,7 @@ function spawnWaveEnemies() {
         createPowerup();
     }
     
-    // Create roses (add new ones every 2 waves)
+    // Create roses (add new ones every 2 waves, more frequent)
     if (waveNumber > 1 && waveNumber % 2 === 0) { // Start at wave 2, then every 2 waves
         createRose(); // Add one new rose
     }
@@ -2012,7 +1991,16 @@ function drawRoses() {
         }
         
         // Draw rose poison bullets
-        drawRosePoisonBullets(rose);
+        ctx.fillStyle = 'green';
+        for (const bullet of rose.poisonBullets) {
+            // Calculate screen position relative to ship
+            const screenX = bullet.x - ship.x + canvas.width / 2;
+            const screenY = bullet.y - ship.y + canvas.height / 2;
+            
+            ctx.beginPath();
+            ctx.arc(screenX, screenY, bullet.radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
     }
 }
 
