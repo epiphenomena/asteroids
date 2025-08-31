@@ -490,9 +490,9 @@ function createPowerup(x = null, y = null) {
         y = Math.sin(angle) * distance;
     }
     
-    // 20% chance for ship size powerup, 60% for bullet size, 20% for force field
-    const powerupType = Math.random() < 0.2 ? 'shipSize' : 
-                       Math.random() < 0.75 ? 'bulletSize' : 'forceField';
+    // 30% chance for ship size powerup, 50% for bullet size, 20% for force field
+    const powerupType = Math.random() < 0.3 ? 'shipSize' : 
+                       Math.random() < 0.714 ? 'bulletSize' : 'forceField'; // 30% ship size, 50% bullet size, 20% force field
     
     const powerup = {
         x: x,
@@ -1173,8 +1173,19 @@ function spawnWaveEnemies() {
     }
     
     // Create powerups (more frequent as game progresses)
-    if (waveNumber % 2 === 1 || Math.random() < 0.4) { // Increased random chance
+    if (waveNumber % 2 === 1 || Math.random() < 0.6) { // Increased random chance to 60%
         createPowerup();
+    }
+    
+    // Create additional powerups based on wave number for even more frequency
+    if (waveNumber > 5) {
+        // Create extra powerups starting at wave 6
+        const extraPowerups = Math.floor((waveNumber - 5) / 2); // 1 extra every 2 waves after wave 5
+        for (let i = 0; i < extraPowerups; i++) {
+            if (Math.random() < 0.7) { // 70% chance for each extra powerup
+                createPowerup();
+            }
+        }
     }
     
     // Create roses (add new ones every 2 waves)
