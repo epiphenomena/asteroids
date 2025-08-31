@@ -202,11 +202,21 @@ function resetGame() {
     // Create initial asteroids
     createAsteroids(3);
     
-    // Create stationary turrets
+    // Create a bunch of turrets (12 total)
     createTurret(); // Top-right corner
     createTurret(-canvas.width / 2 + 100, -canvas.height / 2 + 100); // Top-left corner
     createTurret(canvas.width / 2 - 100, canvas.height / 2 - 100); // Bottom-right corner
     createTurret(-canvas.width / 2 + 100, canvas.height / 2 - 100); // Bottom-left corner
+    
+    // Additional turrets around the edges
+    createTurret(canvas.width / 4, -canvas.height / 2 + 50); // Top edge
+    createTurret(-canvas.width / 4, -canvas.height / 2 + 50); // Top edge
+    createTurret(canvas.width / 4, canvas.height / 2 - 50); // Bottom edge
+    createTurret(-canvas.width / 4, canvas.height / 2 - 50); // Bottom edge
+    createTurret(canvas.width / 2 - 50, canvas.height / 4); // Right edge
+    createTurret(canvas.width / 2 - 50, -canvas.height / 4); // Right edge
+    createTurret(-canvas.width / 2 + 50, canvas.height / 4); // Left edge
+    createTurret(-canvas.width / 2 + 50, -canvas.height / 4); // Left edge
     
     // Create two groups of 5 army men each
     createArmyMenGroup(5); // First group
@@ -316,11 +326,11 @@ function createTurret(x = null, y = null) {
         y = Math.sin(angle) * 150;
     }
     
-    // Check for collisions with existing asteroids/mines (try up to 10 times)
+    // Check for collisions with existing asteroids/mines/turrets (try up to 20 times)
     let attempts = 0;
     let collision = true;
     
-    while (collision && attempts < 10) {
+    while (collision && attempts < 20) {
         collision = false;
         attempts++;
         
@@ -331,16 +341,16 @@ function createTurret(x = null, y = null) {
             const distance = Math.sqrt(dx * dx + dy * dy);
             if (distance < 25 + asteroid.radius) {
                 collision = true;
-                // Move turret to a different corner
-                const corners = [
-                    {x: canvas.width / 2 - 100, y: -canvas.height / 2 + 100}, // Top-left
-                    {x: canvas.width / 2 - 100, y: canvas.height / 2 - 100}, // Bottom-right
-                    {x: -canvas.width / 2 + 100, y: -canvas.height / 2 + 100}, // Top-left
-                    {x: -canvas.width / 2 + 100, y: canvas.height / 2 - 100} // Bottom-left
+                // Move turret to a different position along screen edges
+                const edges = [
+                    {x: Math.random() * canvas.width - canvas.width / 2, y: -canvas.height / 2 + 30}, // Top edge
+                    {x: Math.random() * canvas.width - canvas.width / 2, y: canvas.height / 2 - 30}, // Bottom edge
+                    {x: canvas.width / 2 - 30, y: Math.random() * canvas.height - canvas.height / 2}, // Right edge
+                    {x: -canvas.width / 2 + 30, y: Math.random() * canvas.height - canvas.height / 2}  // Left edge
                 ];
-                const corner = corners[Math.floor(Math.random() * corners.length)];
-                x = corner.x + (Math.random() - 0.5) * 50;
-                y = corner.y + (Math.random() - 0.5) * 50;
+                const edge = edges[Math.floor(Math.random() * edges.length)];
+                x = edge.x + (Math.random() - 0.5) * 50;
+                y = edge.y + (Math.random() - 0.5) * 50;
                 break;
             }
         }
@@ -353,16 +363,39 @@ function createTurret(x = null, y = null) {
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 if (distance < 25 + mine.radius) {
                     collision = true;
-                    // Move turret to a different corner
-                    const corners = [
-                        {x: canvas.width / 2 - 100, y: -canvas.height / 2 + 100}, // Top-left
-                        {x: canvas.width / 2 - 100, y: canvas.height / 2 - 100}, // Bottom-right
-                        {x: -canvas.width / 2 + 100, y: -canvas.height / 2 + 100}, // Top-left
-                        {x: -canvas.width / 2 + 100, y: canvas.height / 2 - 100} // Bottom-left
+                    // Move turret to a different position along screen edges
+                    const edges = [
+                        {x: Math.random() * canvas.width - canvas.width / 2, y: -canvas.height / 2 + 30}, // Top edge
+                        {x: Math.random() * canvas.width - canvas.width / 2, y: canvas.height / 2 - 30}, // Bottom edge
+                        {x: canvas.width / 2 - 30, y: Math.random() * canvas.height - canvas.height / 2}, // Right edge
+                        {x: -canvas.width / 2 + 30, y: Math.random() * canvas.height - canvas.height / 2}  // Left edge
                     ];
-                    const corner = corners[Math.floor(Math.random() * corners.length)];
-                    x = corner.x + (Math.random() - 0.5) * 50;
-                    y = corner.y + (Math.random() - 0.5) * 50;
+                    const edge = edges[Math.floor(Math.random() * edges.length)];
+                    x = edge.x + (Math.random() - 0.5) * 50;
+                    y = edge.y + (Math.random() - 0.5) * 50;
+                    break;
+                }
+            }
+        }
+        
+        // Check other turrets
+        if (!collision) {
+            for (const turret of turrets) {
+                const dx = x - turret.x;
+                const dy = y - turret.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < 35) { // Minimum distance between turrets
+                    collision = true;
+                    // Move turret to a different position along screen edges
+                    const edges = [
+                        {x: Math.random() * canvas.width - canvas.width / 2, y: -canvas.height / 2 + 30}, // Top edge
+                        {x: Math.random() * canvas.width - canvas.width / 2, y: canvas.height / 2 - 30}, // Bottom edge
+                        {x: canvas.width / 2 - 30, y: Math.random() * canvas.height - canvas.height / 2}, // Right edge
+                        {x: -canvas.width / 2 + 30, y: Math.random() * canvas.height - canvas.height / 2}  // Left edge
+                    ];
+                    const edge = edges[Math.floor(Math.random() * edges.length)];
+                    x = edge.x + (Math.random() - 0.5) * 50;
+                    y = edge.y + (Math.random() - 0.5) * 50;
                     break;
                 }
             }
