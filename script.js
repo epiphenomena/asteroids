@@ -16,6 +16,7 @@ let ship;
 let asteroids = [];
 let bullets = [];
 let particles = [];
+let mines = [];
 let score = 0;
 let lives = 3;
 let highScore = 0;
@@ -47,6 +48,12 @@ function init() {
     gameStarted = false;
     gameOver = false;
     
+    // Ensure game over screen is hidden at start
+    if (gameOverScreen) {
+        gameOverScreen.classList.remove('show');
+        gameOverScreen.style.display = 'none';
+    }
+    
     gameLoop();
 }
 
@@ -76,6 +83,11 @@ function setupEventListeners() {
         e.stopPropagation();
         if (startScreen) {
             startScreen.style.display = 'none';
+        }
+        // Also hide game over screen if it's visible
+        if (gameOverScreen) {
+            gameOverScreen.classList.remove('show');
+            gameOverScreen.style.display = 'none';
         }
         gameStarted = true;
         resetGame();
@@ -181,6 +193,7 @@ function resetGame() {
     asteroids = [];
     bullets = [];
     particles = [];
+    mines = [];
     score = 0;
     lives = 3;
     gameOver = false;
@@ -188,6 +201,12 @@ function resetGame() {
     // Update UI
     if (scoreValue) scoreValue.textContent = score;
     if (livesValue) livesValue.textContent = lives;
+    
+    // Hide game over screen if it's visible
+    if (gameOverScreen) {
+        gameOverScreen.classList.remove('show');
+        gameOverScreen.style.display = 'none';
+    }
     
     // Create initial asteroids
     createAsteroids(5);
@@ -202,6 +221,9 @@ function createAsteroids(count) {
 
 // Create a single asteroid
 function createAsteroid(size = 3, x = null, y = null) {
+    // Randomly decide if this should be a mine (10% chance)
+    const isMine = Math.random() < 0.1;
+    
     // If position not specified, create at random edge relative to ship position
     if (x === null || y === null) {
         const side = Math.floor(Math.random() * 4);
@@ -236,13 +258,26 @@ function createAsteroid(size = 3, x = null, y = null) {
     // Radius based on size (3 = large, 2 = medium, 1 = small)
     const radius = size * 10;
     
-    asteroids.push({
-        x: x,
-        y: y,
-        radius: radius,
-        velocity: { x: velocityX, y: velocityY },
-        size: size
-    });
+    if (isMine) {
+        // Create a mine
+        mines.push({
+            x: x,
+            y: y,
+            radius: radius,
+            velocity: { x: velocityX, y: velocityY },
+            size: size,
+            type: 'mine' // Distinguish mines from asteroids
+        });
+    } else {
+        // Create a regular asteroid
+        asteroids.push({
+            x: x,
+            y: y,
+            radius: radius,
+            velocity: { x: velocityX, y: velocityY },
+            size: size
+        });
+    }
 }
 
 // Main game loop
@@ -272,6 +307,9 @@ function update() {
     
     // Update asteroids
     updateAsteroids();
+    
+    // Update mines
+    updateMines();
     
     // Update particles
     updateParticles();
@@ -460,6 +498,27 @@ function updateAsteroids() {
     }
 }
 
+// Update mine positions
+function updateMines() {
+    for (const mine of mines) {
+        // Update position
+        mine.x += mine.velocity.x;
+        mine.y += mine.velocity.y;
+        
+        // Screen wrapping
+        const buffer = 100; // Distance from screen edge
+        const leftEdge = - canvas.width / 2 - buffer;
+        const rightEdge = canvas.width / 2 + buffer;
+        const topEdge = - canvas.height / 2 - buffer;
+        const bottomEdge = canvas.height / 2 + buffer;
+        
+        if (mine.x < leftEdge) mine.x = rightEdge;
+        if (mine.x > rightEdge) mine.x = leftEdge;
+        if (mine.y < topEdge) mine.y = bottomEdge;
+        if (mine.y > bottomEdge) mine.y = topEdge;
+    }
+}
+
 // Update particle positions and remove dead particles
 function updateParticles() {
     for (let i = particles.length - 1; i >= 0; i--) {
@@ -479,19 +538,20 @@ function updateParticles() {
     }
 }
 
-// Check for collisions between bullets and asteroids, and ship and asteroids
+// Check for collisions between bullets and asteroids/mines, and ship and asteroids/mines
 function checkCollisions() {
     // Check for bullet-asteroid collisions
     for (let i = 0; i < bullets.length; i++) {
         const bullet = bullets[i];
         
+        // Check bullet-asteroid collisions
         for (let j = 0; j < asteroids.length; j++) {
             const asteroid = asteroids[j];
             
             // Check collision
             if (distance(bullet.x, bullet.y, asteroid.x, asteroid.y) < bullet.radius + asteroid.radius) {
                 // Create explosion particles
-                createExplosion(asteroid.x, asteroid.y);
+                createExplosion(asteroid.x, asteroid.y, false);
                 
                 // Increase score
                 score += 10 * asteroid.size;
@@ -524,9 +584,46 @@ function checkCollisions() {
                 }
                 
                 // If all asteroids are destroyed, create a new wave
-                if (asteroids.length === 0) {
+                if (asteroids.length === 0 && mines.length === 0) {
                     setTimeout(() => {
-                        if (asteroids.length === 0 && !gameOver) {
+                        if (asteroids.length === 0 && mines.length === 0 && !gameOver) {
+                            createAsteroids(5);
+                        }
+                    }, 100);
+                }
+                
+                // Process only one collision per frame
+                return;
+            }
+        }
+        
+        // Check bullet-mine collisions
+        for (let j = 0; j < mines.length; j++) {
+            const mine = mines[j];
+            
+            // Check collision
+            if (distance(bullet.x, bullet.y, mine.x, mine.y) < bullet.radius + mine.radius) {
+                // Create mine explosion that affects nearby objects
+                const explosionRadius = 100; // Approximately 1 inch at typical screen resolution
+                createExplosion(mine.x, mine.y, true);
+                
+                // Remove bullet
+                bullets.splice(i, 1);
+                
+                // Remove the mine that was hit
+                mines.splice(j, 1);
+                
+                // Increase score
+                score += 15 * mine.size; // Mines are worth more points
+                if (scoreValue) scoreValue.textContent = score;
+                
+                // Check for objects within explosion radius
+                checkMineExplosion(mine.x, mine.y, explosionRadius);
+                
+                // If all asteroids and mines are destroyed, create a new wave
+                if (asteroids.length === 0 && mines.length === 0) {
+                    setTimeout(() => {
+                        if (asteroids.length === 0 && mines.length === 0 && !gameOver) {
                             createAsteroids(5);
                         }
                     }, 100);
@@ -544,8 +641,12 @@ function checkCollisions() {
             const asteroid = asteroids[i];
             
             if (distance(0, 0, asteroid.x, asteroid.y) < ship.radius + asteroid.radius) {
-                // Create explosion particles at ship position (center of screen)
-                createExplosion(0, 0);
+                // Create explosion particles for both ship and asteroid
+                createExplosion(0, 0, false); // Ship explosion
+                createExplosion(asteroid.x, asteroid.y, false); // Asteroid explosion
+                
+                // Remove the asteroid that was collided with
+                asteroids.splice(i, 1);
                 
                 // Lose a life
                 lives--;
@@ -568,23 +669,137 @@ function checkCollisions() {
                 break;
             }
         }
+        
+        // Check for ship-mine collisions (only if ship is not invincible and visible)
+        for (let i = 0; i < mines.length; i++) {
+            const mine = mines[i];
+            
+            if (distance(0, 0, mine.x, mine.y) < ship.radius + mine.radius) {
+                // Create mine explosion that affects nearby objects
+                const explosionRadius = 100; // Approximately 1 inch at typical screen resolution
+                createExplosion(0, 0, false);
+                createExplosion(mine.x, mine.y, true); // Also create explosion at mine position
+                
+                // Remove the mine that exploded
+                mines.splice(i, 1);
+                
+                // Lose a life (mines are more dangerous)
+                lives--;
+                if (livesValue) livesValue.textContent = lives;
+                
+                // Reset ship velocity to zero
+                ship.velocity.x = 0;
+                ship.velocity.y = 0;
+                
+                // Check for objects within explosion radius
+                checkMineExplosion(mine.x, mine.y, explosionRadius);
+                
+                // Check for game over
+                if (lives <= 0) {
+                    endGame();
+                } else {
+                    // Make ship invisible for 2 seconds (120 frames at 60fps)
+                    ship.visible = false;
+                    ship.respawnTime = 120;
+                }
+                
+                // Process only one collision per frame
+                break;
+            }
+        }
     }
 }
 
 // Create explosion particles
-function createExplosion(x, y) {
-    for (let i = 0; i < 20; i++) {
+function createExplosion(x, y, isMine = false) {
+    const particleCount = isMine ? 30 : 20; // More particles for mine explosions
+    const maxRadius = isMine ? 4 : 3; // Larger particles for mine explosions
+    const maxVelocity = isMine ? 7 : 5; // Faster particles for mine explosions
+    
+    for (let i = 0; i < particleCount; i++) {
         particles.push({
             x: x,
             y: y,
-            radius: Math.random() * 3 + 1,
+            radius: Math.random() * maxRadius + 1,
             velocity: {
-                x: (Math.random() - 0.5) * 5,
-                y: (Math.random() - 0.5) * 5
+                x: (Math.random() - 0.5) * maxVelocity,
+                y: (Math.random() - 0.5) * maxVelocity
             },
             life: 30,
             maxLife: 30
         });
+    }
+    
+    // If this is a mine explosion, create a temporary red circle for the explosion radius
+    if (isMine) {
+        // Create a temporary visual effect for the explosion radius
+        particles.push({
+            x: x,
+            y: y,
+            radius: 100, // Explosion radius
+            velocity: { x: 0, y: 0 },
+            life: 10,
+            maxLife: 10,
+            isExplosionRadius: true // Special flag for radius visualization
+        });
+    }
+}
+
+// Check for objects within mine explosion radius and destroy them
+function checkMineExplosion(x, y, radius) {
+    // Check for asteroids within explosion radius
+    for (let i = asteroids.length - 1; i >= 0; i--) {
+        const asteroid = asteroids[i];
+        if (distance(x, y, asteroid.x, asteroid.y) < radius) {
+            // Create explosion particles for the destroyed asteroid
+            createExplosion(asteroid.x, asteroid.y, false);
+            
+            // Increase score
+            score += 10 * asteroid.size;
+            if (scoreValue) scoreValue.textContent = score;
+            
+            // Remove asteroid
+            asteroids.splice(i, 1);
+            
+            // If asteroid is large (size 3), split it into medium ones (size 2)
+            // Medium asteroids (size 2) split into small ones (size 1)
+            // Small asteroids (size 1) are just destroyed
+            if (asteroid.size > 1) {
+                // Create two smaller asteroids
+                for (let k = 0; k < 2; k++) {
+                    // Add some variance to the angle
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Math.random() * 2 + 1;
+                    const velocityX = Math.cos(angle) * speed;
+                    const velocityY = Math.sin(angle) * speed;
+                    
+                    asteroids.push({
+                        x: asteroid.x,
+                        y: asteroid.y,
+                        radius: (asteroid.size - 1) * 10,
+                        velocity: { x: velocityX, y: velocityY },
+                        size: asteroid.size - 1
+                    });
+                }
+            }
+        }
+    }
+    
+    // Check for mines within explosion radius
+    for (let i = mines.length - 1; i >= 0; i--) {
+        const mine = mines[i];
+        // Don't trigger the mine that caused the explosion
+        if (distance(x, y, mine.x, mine.y) < radius && distance(x, y, mine.x, mine.y) > 5) {
+            // Create explosion particles for the destroyed mine
+            createExplosion(mine.x, mine.y, true);
+            
+            // Increase score
+            score += 15 * mine.size; // Mines are worth more points
+            if (scoreValue) scoreValue.textContent = score;
+            
+            // Remove mine
+            mines.splice(i, 1);
+        }
     }
 }
 
@@ -627,11 +842,11 @@ function splitAsteroid(index) {
         }
     }
     
-    // If all asteroids are destroyed, create a new wave
+    // If all asteroids and mines are destroyed, create a new wave
     // Add a small delay to avoid immediate creation
-    if (asteroids.length === 0) {
+    if (asteroids.length === 0 && mines.length === 0) {
         setTimeout(() => {
-            if (asteroids.length === 0 && !gameOver) {
+            if (asteroids.length === 0 && mines.length === 0 && !gameOver) {
                 createAsteroids(5);
             }
         }, 100);
@@ -667,6 +882,9 @@ function render() {
         // Draw asteroids
         drawAsteroids();
         
+        // Draw mines
+        drawMines();
+        
         // Draw ship at the center of the screen
         drawShipAtCenter();
     }
@@ -698,12 +916,23 @@ function drawParticles() {
         const screenX = particle.x - ship.x + canvas.width / 2;
         const screenY = particle.y - ship.y + canvas.height / 2;
         
-        // Fade out as particle life decreases
-        const alpha = particle.life / particle.maxLife;
-        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-        ctx.beginPath();
-        ctx.arc(screenX, screenY, particle.radius, 0, Math.PI * 2);
-        ctx.fill();
+        // Check if this is a special explosion radius particle
+        if (particle.isExplosionRadius) {
+            // Draw a red circle for the explosion radius
+            const alpha = particle.life / particle.maxLife;
+            ctx.strokeStyle = `rgba(255, 0, 0, ${alpha})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(screenX, screenY, particle.radius, 0, Math.PI * 2);
+            ctx.stroke();
+        } else {
+            // Fade out as particle life decreases
+            const alpha = particle.life / particle.maxLife;
+            ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+            ctx.beginPath();
+            ctx.arc(screenX, screenY, particle.radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
     }
 }
 
@@ -734,6 +963,32 @@ function drawAsteroids() {
         ctx.arc(screenX, screenY, asteroid.radius, 0, Math.PI * 2);
         ctx.stroke();
     }
+}
+
+// Draw all mines
+function drawMines() {
+    ctx.strokeStyle = 'red';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 3]); // Dashed line for mines
+    for (const mine of mines) {
+        // Calculate screen position relative to ship
+        const screenX = mine.x - ship.x + canvas.width / 2;
+        const screenY = mine.y - ship.y + canvas.height / 2;
+        
+        // Draw mine as a circle with a cross inside
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, mine.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Draw cross inside mine
+        ctx.beginPath();
+        ctx.moveTo(screenX - mine.radius * 0.7, screenY - mine.radius * 0.7);
+        ctx.lineTo(screenX + mine.radius * 0.7, screenY + mine.radius * 0.7);
+        ctx.moveTo(screenX + mine.radius * 0.7, screenY - mine.radius * 0.7);
+        ctx.lineTo(screenX - mine.radius * 0.7, screenY + mine.radius * 0.7);
+        ctx.stroke();
+    }
+    ctx.setLineDash([]); // Reset line dash
 }
 
 // Draw the player ship at the center of the screen

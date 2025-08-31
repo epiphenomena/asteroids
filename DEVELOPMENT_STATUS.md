@@ -27,11 +27,25 @@ This document provides a comprehensive overview of the current state of developm
 - ✅ Small asteroids (size 1) are destroyed when shot (no further splitting)
 - ✅ All asteroids only split once when destroyed
 - ✅ Asteroids spawn at safe distances to prevent immediate collisions
+- ✅ When ship collides with asteroid, both are destroyed
+
+### Mine Behavior
+- ✅ 10% chance of asteroids being mines instead
+- ✅ Mines look different (red dashed circles with cross)
+- ✅ Mines act as bombs when collided with (more dangerous)
+- ✅ Mines explode in a 1-inch radius when hit or collided with
+- ✅ All objects within explosion radius are destroyed
+- ✅ Mine explosions show a red circle in the explosion radius
+- ✅ Mines are worth 50% more points than asteroids of same size
+- ✅ Regular asteroids pass through mines without triggering them
 
 ### Scoring System
 - ✅ 10 points per small asteroid destroyed
 - ✅ 20 points per medium asteroid destroyed
 - ✅ 30 points per large asteroid destroyed
+- ✅ 15 points per small mine destroyed
+- ✅ 30 points per medium mine destroyed
+- ✅ 45 points per large mine destroyed
 - ✅ High score tracking with localStorage persistence
 
 ### User Interface
@@ -158,6 +172,7 @@ asteroids/
 - 2025-08-30: Fixed shooting during death/invincibility periods
 - 2025-08-30: Verified all game mechanics working correctly
 - 2025-08-30: Completed comprehensive testing
+- 2025-08-30: Fixed game over screen appearing at start of round
 
 ## Future Enhancement Possibilities
 While the current implementation is complete and functional, potential future enhancements could include:

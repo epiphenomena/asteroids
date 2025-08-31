@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asteroids Mines Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background: #000; 
+            color: #fff; 
+            margin: 0; 
+            padding: 20px; 
+        }
+        .test-container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+        }
+        .test-result { 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 5px; 
+        }
+        .pass { 
+            background: #2a5; 
+        }
+        .fail { 
+            background: #a22; 
+        }
+        .info { 
+            background: #333; 
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Asteroids Mines Feature Test</h1>
+        <div id="test-results"></div>
+    </div>
+
+    <script>
+        // Test results display
+        function logTestResult(message, passed) {
+            const resultsDiv = document.getElementById('test-results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${passed ? 'pass' : 'fail'}`;
+            resultDiv.textContent = `${passed ? 'PASS' : 'FAIL'}: ${message}`;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        // Test the game code for mines feature
+        window.addEventListener('load', function() {
+            // Test 1: Check if mines array exists
+            if (typeof mines !== 'undefined') {
+                logTestResult('Mines array exists', true);
+            } else {
+                logTestResult('Mines array exists', false);
+            }
+
+            // Test 2: Check if drawMines function exists
+            if (typeof drawMines !== 'undefined') {
+                logTestResult('drawMines function exists', true);
+            } else {
+                logTestResult('drawMines function exists', false);
+            }
+
+            // Test 3: Check if updateMines function exists
+            if (typeof updateMines !== 'undefined') {
+                logTestResult('updateMines function exists', true);
+            } else {
+                logTestResult('updateMines function exists', false);
+            }
+
+            // Test 4: Check if createAsteroid function can create mines
+            if (typeof createAsteroid !== 'undefined') {
+                logTestResult('createAsteroid function exists', true);
+                
+                // Test mine creation (this is random, so we'll just check if it runs)
+                try {
+                    // This will create either an asteroid or a mine (random)
+                    createAsteroid(3);
+                    logTestResult('createAsteroid can be called without errors', true);
+                } catch (e) {
+                    logTestResult('createAsteroid can be called without errors', false);
+                }
+            } else {
+                logTestResult('createAsteroid function exists', false);
+            }
+        });
+    </script>
+    
+    <!-- Include the game script -->
+    <script src="script.js"></script>
+    
+    <script>
+        // Override some functions for testing
+        const originalInit = init;
+        init = function() {
+            // Don't start the full game loop, just initialize what we need
+            resizeCanvas();
+            
+            // Create player ship at center
+            ship = {
+                x: 0,
+                y: 0,
+                radius: 10,
+                angle: 0,
+                velocity: { x: 0, y: 0 },
+                rotationSpeed: 0.05,
+                acceleration: 0.65,
+                maxSpeed: 5,
+                friction: 0.98,
+                shootCooldown: 0,
+                maxShootCooldown: 20,
+                invincible: false,
+                invincibilityTime: 0,
+                respawnTime: 0,
+                visible: true
+            };
+            
+            // Initialize arrays
+            asteroids = [];
+            bullets = [];
+            particles = [];
+            mines = [];
+            
+            console.log('Test environment initialized');
+        };
+    </script>
+</body>
+</html>
