@@ -1,20 +1,20 @@
 # Wave System Implementation
 
 ## Overview
-Implemented a wave-based enemy respawn system where all enemy types continuously spawn throughout the game. Enemies respawn both periodically based on a timer and when all asteroids/mines are destroyed.
+Implemented a wave-based enemy respawn system where new waves spawn only after all enemies from the previous wave are defeated. This creates a more strategic progression where players must clear each wave before facing the next challenge.
 
 ## Features Added
 
 ### 1. Wave Tracking
 - `waveNumber`: Tracks the current wave (starts at 1)
-- `waveTimer`: Counts frames since last wave
-- `maxWaveTimer`: Base time between waves (30 seconds)
-- Wave timer decreases as game progresses (waves come faster)
+- Waves advance only when all enemies are defeated
+- No timer-based wave progression
 
 ### 2. Enemy Respawn System
-Enemies now respawn in two ways:
-1. **Periodic Waves**: Every 30 seconds (decreasing) a new wave spawns
-2. **Clear-based Respawn**: When all asteroids/mines are destroyed
+Enemies now respawn only when all previous enemies are defeated:
+- All asteroids, mines, and army men must be destroyed
+- Turrets, roses, and powerups persist between waves
+- Each wave increases in difficulty
 
 ### 3. Wave Progression
 Each wave increases in difficulty:
@@ -33,7 +33,7 @@ Each wave increases in difficulty:
 ## Implementation Details
 
 ### New Functions
-- `updateWaves()`: Manages wave timing and progression
+- `updateWaves()`: Checks if all enemies defeated and spawns next wave
 - `spawnWaveEnemies()`: Spawns appropriate enemies for current wave
 - Modified `createAsteroid()` to support forced mine creation
 - `createForceFieldPowerup()`: Creates force field powerups
@@ -45,8 +45,6 @@ Each wave increases in difficulty:
 
 ### New Variables
 - `waveNumber`: Current wave number
-- `waveTimer`: Timer for wave progression
-- `maxWaveTimer`: Base time between waves
 
 ## Wave Progression Formula
 
@@ -75,7 +73,9 @@ Each wave increases in difficulty:
 - Bullet Size: Spawn more frequently as game progresses
 - **Force Field: 1 per wave**
 
-### Wave Timer
-- Base: 30 seconds (1800 frames)
-- Decrease: 0.5 seconds per wave (30 frames)
-- Minimum: 10 seconds (600 frames)
+## Game Flow
+1. Wave 1 starts with initial enemies
+2. Player must destroy all asteroids, mines, and army men
+3. When all are defeated, Wave 2 begins
+4. Process repeats with increasing difficulty
+5. Turrets, roses, and powerups remain between waves

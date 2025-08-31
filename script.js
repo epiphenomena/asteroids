@@ -30,8 +30,6 @@ let gameOver = false;
 let gameStarted = false;
 let bulletSizeMultiplier = 1.0; // Powerup effect for bullet size
 let waveNumber = 1; // Track current wave
-let waveTimer = 0; // Timer for wave progression
-let maxWaveTimer = 1800; // 30 seconds at 60fps for next wave
 let forceFieldActive = false; // Force field powerup effect
 let forceFieldRadius = 30; // Radius of force field
 let forceFieldLifetime = 0; // Remaining time for force field
@@ -214,7 +212,6 @@ function resetGame() {
     roses = []; // Reset roses
     bulletSizeMultiplier = 1.0; // Reset bullet size multiplier
     waveNumber = 1; // Reset wave number
-    waveTimer = 0; // Reset wave timer
     forceFieldActive = false; // Reset force field
     forceFieldLifetime = 0; // Reset force field lifetime
     
@@ -1139,32 +1136,21 @@ function updateForceField() {
 function updateWaves() {
     if (!gameStarted || gameOver) return;
     
-    // Increment wave timer
-    waveTimer++;
-    
-    // Calculate current max wave timer (decreases as game progresses)
-    const currentMaxWaveTimer = Math.max(600, maxWaveTimer - (waveNumber * 30)); // Minimum 10 seconds
-    
-    // Check if it's time for a new wave
-    if (waveTimer >= currentMaxWaveTimer) {
-        waveTimer = 0;
+    // Check if all enemies from current wave are defeated
+    if (asteroids.length === 0 && mines.length === 0 && armyMen.length === 0) {
+        // All enemies defeated, spawn next wave
         waveNumber++;
         
-        // Spawn new enemies based on wave number
+        // Spawn new enemies for the next wave
         spawnWaveEnemies();
         
         // Update UI
         if (waveValue) waveValue.textContent = waveNumber;
+        
+        console.log(`Wave ${waveNumber} spawned!`);
     }
     
-    // Also spawn enemies if all are destroyed (existing behavior)
-    if (asteroids.length === 0 && mines.length === 0) {
-        setTimeout(() => {
-            if (asteroids.length === 0 && mines.length === 0 && !gameOver) {
-                createAsteroids(3);
-            }
-        }, 100);
-    }
+    // No timer-based wave spawning anymore
 }
 
 // Spawn enemies for current wave
@@ -1202,8 +1188,6 @@ function spawnWaveEnemies() {
     
     // Create a force field powerup every wave
     createForceFieldPowerup();
-    
-    console.log(`Wave ${waveNumber} spawned with ${asteroidCount} asteroids, ${mineCount} mines`);
 }
 
 // Check for collisions between bullets and asteroids/mines, and ship and asteroids/mines
