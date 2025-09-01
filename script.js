@@ -28,6 +28,8 @@ let speedBoostActive = false; // Track if speed boost is active
 let speedBoostTimer = 0; // Timer for speed boost duration
 let originalMaxSpeed = 0; // Store original max speed
 let shipShape = 'triangle'; // Current ship shape ('triangle', 'diamond', 'pentagon', 'hexagon', 'square')
+let shipShapeTimer = 0; // Timer for ship shape duration
+let originalShipShape = 'triangle'; // Store original ship shape
 let score = 0;
 let lives = 3;
 let highScore = 0;
@@ -242,6 +244,8 @@ function resetGame() {
     
     // Reset ship shape to default
     shipShape = 'triangle';
+    shipShapeTimer = 0;
+    originalShipShape = 'triangle';
     
     // Reset game state
     asteroids = [];
@@ -649,8 +653,8 @@ function update() {
     // Update sword
     updateSword();
     
-    // Update force field
-    updateForceField();
+    // Update timed effects (force field, speed boost, ship shape)
+    updateTimedEffects();
     
     // Update wave system
     updateWaves();
@@ -1121,8 +1125,9 @@ function updateParticles() {
     }
 }
 
-// Update force field
-function updateForceField() {
+// Update timed effects (force field, speed boost, ship shape)
+function updateTimedEffects() {
+    // Update force field
     if (forceFieldActive) {
         forceFieldLifetime--;
         if (forceFieldLifetime <= 0) {
@@ -1136,6 +1141,14 @@ function updateForceField() {
         if (speedBoostTimer <= 0) {
             speedBoostActive = false;
             ship.maxSpeed = originalMaxSpeed; // Reset to original max speed
+        }
+    }
+    
+    // Update ship shape timer
+    if (shipShapeTimer > 0) {
+        shipShapeTimer--;
+        if (shipShapeTimer <= 0) {
+            shipShape = originalShipShape; // Reset to original ship shape
         }
     }
 }
@@ -1777,10 +1790,18 @@ function checkCollisions() {
                         if (scoreValue) scoreValue.textContent = score;
                     }
                 } else if (powerup.type === 'shipShape') {
-                    // Change ship to a random shape
+                    // Change ship to a random shape for 20 seconds
+                    // Store original shape if this is the first shape change
+                    if (shipShapeTimer <= 0) {
+                        originalShipShape = shipShape;
+                    }
+                    
                     const shapes = ['triangle', 'diamond', 'pentagon', 'hexagon', 'square'];
                     const randomIndex = Math.floor(Math.random() * shapes.length);
                     shipShape = shapes[randomIndex];
+                    
+                    // Set timer for 20 seconds (1200 frames at 60fps)
+                    shipShapeTimer = 1200;
                     
                     // Add visual effect
                     createExplosion(powerup.x, powerup.y, false);
