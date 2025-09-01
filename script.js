@@ -23,6 +23,7 @@ let turrets = []; // Array to hold turrets
 let armyMen = []; // Array to hold army men
 let powerups = []; // Array to hold powerups
 let roses = []; // Array to hold roses
+let feet = []; // Array to hold feet that stamp in one place
 let sword; // Object to hold the orbiting sword
 let speedBoostActive = false; // Track if speed boost is active
 let speedBoostTimer = 0; // Timer for speed boost duration
@@ -264,6 +265,7 @@ function resetGame() {
     armyMen = []; // Reset army men
     powerups = []; // Reset powerups
     roses = []; // Reset roses
+    feet = []; // Reset feet
     bulletSizeMultiplier = 1.0; // Reset bullet size multiplier
     shipSizeMultiplier = 1.0; // Reset ship size multiplier
     waveNumber = 1; // Reset wave number
@@ -580,6 +582,29 @@ function createRose(x = null, y = null) {
     roses.push(rose);
 }
 
+// Create a foot that stamps in one place
+function createFoot(x = null, y = null) {
+    // If position not specified, create at random location
+    if (x === null || y === null) {
+        // Create foot at a random position, but not too close to the center
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 200 + Math.random() * 300; // 200-500 pixels from center
+        x = Math.cos(angle) * distance;
+        y = Math.sin(angle) * distance;
+    }
+    
+    const foot = {
+        x: x,
+        y: y,
+        radius: 20,
+        stampCooldown: 0,
+        maxStampCooldown: 180, // 3 seconds at 60fps
+        stampEffect: 0 // For animation
+    };
+    
+    feet.push(foot);
+}
+
 // Create a group of army men
 function createArmyMenGroup(count) {
     for (let i = 0; i < count; i++) {
@@ -629,6 +654,9 @@ function update() {
     
     // Update roses
     updateRoses();
+    
+    // Update feet
+    updateFeet();
     
     // Update particles
     updateParticles();
@@ -1069,6 +1097,42 @@ function updateRoses() {
     }
 }
 
+// Update feet
+function updateFeet() {
+    for (const foot of feet) {
+        // Update stamp cooldown
+        if (foot.stampCooldown > 0) {
+            foot.stampCooldown--;
+        }
+        
+        // Update stamp effect animation
+        if (foot.stampEffect > 0) {
+            foot.stampEffect--;
+        }
+        
+        // Stamp periodically
+        if (foot.stampCooldown <= 0) {
+            // Create stamp effect
+            foot.stampEffect = 20; // Show effect for 20 frames
+            
+            // Reset cooldown
+            foot.stampCooldown = foot.maxStampCooldown;
+        }
+        
+        // Screen wrapping
+        const buffer = 100; // Distance from screen edge
+        const leftEdge = - canvas.width / 2 - buffer;
+        const rightEdge = canvas.width / 2 + buffer;
+        const topEdge = - canvas.height / 2 - buffer;
+        const bottomEdge = canvas.height / 2 + buffer;
+        
+        if (foot.x < leftEdge) foot.x = rightEdge;
+        if (foot.x > rightEdge) foot.x = leftEdge;
+        if (foot.y < topEdge) foot.y = bottomEdge;
+        if (foot.y > bottomEdge) foot.y = topEdge;
+    }
+}
+
 // Fire a poison bullet from a rose
 function fireRosePoisonBullet(rose, angle) {
     // Calculate bullet starting position (at the rose)
@@ -1221,6 +1285,11 @@ function spawnWaveEnemies() {
     // Create roses (add new ones every 2 waves, more frequent)
     if (waveNumber > 1 && waveNumber % 2 === 0) { // Start at wave 2, then every 2 waves
         createRose(); // Add one new rose
+    }
+    
+    // Create feet with 50% spawn rate
+    if (Math.random() < 0.5) {
+        createFoot(); // Add one foot with 50% chance
     }
     
     // Create a force field powerup every wave
@@ -1377,6 +1446,30 @@ function checkCollisions() {
                 return;
             }
         }
+        
+        // Check bullet-foot collisions
+        for (let j = 0; j < feet.length; j++) {
+            const foot = feet[j];
+            
+            // Check collision
+            if (distance(bullet.x, bullet.y, foot.x, foot.y) < bullet.radius + foot.radius) {
+                // Create explosion particles
+                createExplosion(foot.x, foot.y, false);
+                
+                // Increase score (only if it's a player bullet)
+                if (!bullet.isTurretBullet) {
+                    score += 30; // Feet are worth 30 points
+                    if (scoreValue) scoreValue.textContent = score;
+                }
+                
+                // Remove bullet and foot
+                bullets.splice(i, 1);
+                feet.splice(j, 1);
+                
+                // Process only one collision per frame
+                return;
+            }
+        }
     }
     
     // Check for sword collisions (only if sword exists and ship is visible)
@@ -1505,6 +1598,28 @@ function checkCollisions() {
                     break;
                 }
             }
+            
+            // Check for sword-foot collisions
+            for (let i = 0; i < feet.length; i++) {
+                const foot = feet[i];
+                
+                // Check collision with sword hitbox
+                if (distance(swordPos.x, swordPos.y, foot.x, foot.y) < swordHitboxRadius + foot.radius) {
+                    // Create explosion particles
+                    createExplosion(foot.x, foot.y, false);
+                    
+                    // Increase score
+                    score += 30; // Feet are worth 30 points
+                    if (scoreValue) scoreValue.textContent = score;
+                    
+                    // Remove foot
+                    feet.splice(i, 1);
+                    i--; // Adjust index after removal
+                    
+                    // Break after processing one collision
+                    break;
+                }
+            }
         }
     }
     
@@ -1622,6 +1737,53 @@ function checkCollisions() {
                 
                 // Remove the army man that was collided with
                 armyMen.splice(i, 1);
+                
+                // Lose a life
+                // Check if force field is active to negate damage
+                if (forceFieldActive) {
+                    // Destroy force field instead of losing a life
+                    forceFieldActive = false;
+                    forceFieldLifetime = 0;
+                    // Create visual effect for force field destruction
+                    createExplosion(0, 0, false);
+                } else {
+                    lives--;
+                    if (livesValue) livesValue.textContent = lives;
+                    
+                    // Reset ship velocity to zero
+                    ship.velocity.x = 0;
+                    ship.velocity.y = 0;
+                    
+                    // Check for game over
+                    if (lives <= 0) {
+                        endGame();
+                    } else {
+                        // Make ship invisible for 2 seconds (120 frames at 60fps)
+                        ship.visible = false;
+                        ship.respawnTime = 120;
+                    }
+                }
+                
+                // Process only one collision per frame
+                break;
+            }
+        }
+        
+        // Check for ship-foot collisions (only if ship is not invincible and visible)
+        for (let i = 0; i < feet.length; i++) {
+            const foot = feet[i];
+            
+            if (distance(0, 0, foot.x, foot.y) < ship.radius * shipSizeMultiplier + foot.radius) {
+                // Create explosion particles for both ship and foot
+                createExplosion(0, 0, false); // Ship explosion
+                createExplosion(foot.x, foot.y, false); // Foot explosion
+                
+                // Increase score for destroying the foot
+                score += 30; // Feet are worth 30 points
+                if (scoreValue) scoreValue.textContent = score;
+                
+                // Remove the foot that was collided with
+                feet.splice(i, 1);
                 
                 // Lose a life
                 // Check if force field is active to negate damage
@@ -2043,6 +2205,13 @@ function destroyAllEnemies() {
         score += 75;
     }
     
+    // Create explosions for all feet
+    for (const foot of feet) {
+        createExplosion(foot.x, foot.y, false);
+        // Increase score for each foot
+        score += 30;
+    }
+    
     // Update score display
     if (scoreValue) scoreValue.textContent = score;
     
@@ -2052,6 +2221,7 @@ function destroyAllEnemies() {
     turrets = [];
     armyMen = [];
     roses = [];
+    feet = [];
     
     // Clear rose poison bullets
     for (const rose of roses) {
@@ -2132,6 +2302,9 @@ function render() {
         
         // Draw roses
         drawRoses();
+        
+        // Draw feet
+        drawFeet();
         
         // Draw eating mouse if active
         if (eatingMouse) {
@@ -2675,6 +2848,40 @@ function drawRoses() {
     }
 }
 
+// Draw feet
+function drawFeet() {
+    ctx.strokeStyle = 'brown';
+    ctx.lineWidth = 2;
+    for (const foot of feet) {
+        // Calculate screen position relative to ship
+        const screenX = foot.x - ship.x + canvas.width / 2;
+        const screenY = foot.y - ship.y + canvas.height / 2;
+        
+        // Draw foot as an oval
+        ctx.save();
+        ctx.translate(screenX, screenY);
+        
+        // If stamping, make the foot appear flattened
+        if (foot.stampEffect > 0) {
+            ctx.scale(1.2, 0.8); // Flattened effect
+        }
+        
+        ctx.beginPath();
+        ctx.ellipse(0, 0, foot.radius, foot.radius * 0.7, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Draw toe details
+        ctx.beginPath();
+        ctx.moveTo(-foot.radius * 0.7, -foot.radius * 0.3);
+        ctx.lineTo(-foot.radius * 0.3, -foot.radius * 0.6);
+        ctx.lineTo(foot.radius * 0.3, -foot.radius * 0.6);
+        ctx.lineTo(foot.radius * 0.7, -foot.radius * 0.3);
+        ctx.stroke();
+        
+        ctx.restore();
+    }
+}
+
 // Draw rose poison bullets
 function drawRosePoisonBullets(rose) {
     ctx.fillStyle = 'green';
@@ -2839,6 +3046,11 @@ function drawRadarIndicators() {
     // Draw indicators for army men
     for (const armyMan of armyMen) {
         drawRadarIndicator(armyMan.x, armyMan.y, 'red');
+    }
+    
+    // Draw indicators for feet
+    for (const foot of feet) {
+        drawRadarIndicator(foot.x, foot.y, 'brown');
     }
 }
 
@@ -3051,6 +3263,18 @@ function findClosestTarget() {
         }
     }
     
+    // Check feet
+    for (const foot of feet) {
+        const dx = foot.x - eatingMouse.x;
+        const dy = foot.y - eatingMouse.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestTarget = { type: 'foot', object: foot, x: foot.x, y: foot.y };
+        }
+    }
+    
     return closestTarget;
 }
 
@@ -3128,6 +3352,16 @@ function eatTarget(target) {
                 createExplosion(target.object.x, target.object.y, false);
                 score += 75;
                 roses.splice(roseIndex, 1);
+            }
+            break;
+            
+        case 'foot':
+            // Find and remove the foot
+            const footIndex = feet.indexOf(target.object);
+            if (footIndex !== -1) {
+                createExplosion(target.object.x, target.object.y, false);
+                score += 30;
+                feet.splice(footIndex, 1);
             }
             break;
     }
