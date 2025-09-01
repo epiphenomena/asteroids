@@ -32,6 +32,7 @@ let shipShapeTimer = 0; // Timer for ship shape duration
 let originalShipShape = 'triangle'; // Store original ship shape
 let eatEverythingActive = false; // Track if eat everything effect is active
 let eatEverythingTimer = 0; // Timer for eat everything duration
+let eatingMouse = null; // Object to hold the eating mouse
 let score = 0;
 let lives = 3;
 let highScore = 0;
@@ -252,6 +253,7 @@ function resetGame() {
     // Reset eat everything effect
     eatEverythingActive = false;
     eatEverythingTimer = 0;
+    eatingMouse = null; // Reset eating mouse
     
     // Reset game state
     asteroids = [];
@@ -1106,7 +1108,7 @@ function updateParticles() {
     }
 }
 
-// Update timed effects (force field, speed boost, ship shape, eat everything)
+// Update timed effects (force field, speed boost, ship shape, eating mouse)
 function updateTimedEffects() {
     // Update force field
     if (forceFieldActive) {
@@ -1136,12 +1138,9 @@ function updateTimedEffects() {
         }
     }
     
-    // Update eat everything timer
-    if (eatEverythingActive) {
-        eatEverythingTimer--;
-        if (eatEverythingTimer <= 0) {
-            eatEverythingActive = false;
-        }
+    // Update eating mouse
+    if (eatingMouse) {
+        updateEatingMouse();
     }
 }
 
@@ -1830,12 +1829,16 @@ function checkCollisions() {
                     // Create visual effect at powerup location
                     createExplosion(powerup.x, powerup.y, true); // Large explosion
                 } else if (powerup.type === 'eatEverything') {
-                    // Activate eat everything effect for 7 seconds
-                    eatEverythingActive = true;
-                    eatEverythingTimer = 420; // 7 seconds at 60fps
-                    
-                    // Destroy all current enemies and objects
-                    destroyAllEnemies();
+                    // Spawn a mouse that eats everything for 7 seconds
+                    eatingMouse = {
+                        x: 0, // Start at ship position
+                        y: 0,
+                        radius: 15,
+                        speed: 3,
+                        angle: 0,
+                        target: null, // Current target to eat
+                        eatTimer: 420 // 7 seconds at 60fps
+                    };
                     
                     // Add visual effect
                     createExplosion(powerup.x, powerup.y, true); // Large explosion
@@ -2130,6 +2133,11 @@ function render() {
         // Draw roses
         drawRoses();
         
+        // Draw eating mouse if active
+        if (eatingMouse) {
+            drawEatingMouse();
+        }
+        
         // Draw sword
         drawSword();
         
@@ -2138,11 +2146,6 @@ function render() {
         
         // Draw force field if active
         drawForceField();
-        
-        // Draw eat everything effect if active
-        if (eatEverythingActive) {
-            drawEatEverythingEffect();
-        }
         
         // Draw radar indicators for off-screen objects
         drawRadarIndicators();
@@ -2839,6 +2842,81 @@ function drawRadarIndicators() {
     }
 }
 
+// Draw the eating mouse
+function drawEatingMouse() {
+    if (!eatingMouse) return;
+    
+    // Calculate screen position relative to ship
+    const screenX = eatingMouse.x - ship.x + canvas.width / 2;
+    const screenY = eatingMouse.y - ship.y + canvas.height / 2;
+    
+    ctx.save();
+    ctx.translate(screenX, screenY);
+    ctx.rotate(eatingMouse.angle);
+    
+    // Draw mouse body (circle)
+    ctx.fillStyle = 'gray';
+    ctx.strokeStyle = 'gray';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, eatingMouse.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Draw ears (two small circles)
+    ctx.fillStyle = 'pink';
+    ctx.beginPath();
+    ctx.arc(-eatingMouse.radius * 0.6, -eatingMouse.radius * 0.6, eatingMouse.radius * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.arc(eatingMouse.radius * 0.6, -eatingMouse.radius * 0.6, eatingMouse.radius * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Draw nose (small black circle)
+    ctx.fillStyle = 'black';
+    ctx.beginPath();
+    ctx.arc(0, eatingMouse.radius * 0.2, eatingMouse.radius * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Draw eyes (two small white circles with black pupils)
+    ctx.fillStyle = 'white';
+    ctx.beginPath();
+    ctx.arc(-eatingMouse.radius * 0.4, -eatingMouse.radius * 0.2, eatingMouse.radius * 0.25, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.arc(eatingMouse.radius * 0.4, -eatingMouse.radius * 0.2, eatingMouse.radius * 0.25, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    
+    // Draw pupils
+    ctx.fillStyle = 'black';
+    ctx.beginPath();
+    ctx.arc(-eatingMouse.radius * 0.4, -eatingMouse.radius * 0.2, eatingMouse.radius * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.beginPath();
+    ctx.arc(eatingMouse.radius * 0.4, -eatingMouse.radius * 0.2, eatingMouse.radius * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Draw tail (curved line)
+    ctx.strokeStyle = 'gray';
+    ctx.beginPath();
+    ctx.moveTo(eatingMouse.radius * 0.8, eatingMouse.radius * 0.3);
+    ctx.bezierCurveTo(
+        eatingMouse.radius * 1.2, eatingMouse.radius * 0.5,
+        eatingMouse.radius * 1.2, -eatingMouse.radius * 0.5,
+        eatingMouse.radius * 0.8, -eatingMouse.radius * 0.3
+    );
+    ctx.stroke();
+    
+    ctx.restore();
+}
+
 // Draw eat everything effect
 function drawEatEverythingEffect() {
     // Draw a pulsing green circle around the ship
@@ -2862,6 +2940,200 @@ function drawEatEverythingEffect() {
     }
     
     ctx.restore();
+}
+
+// Update the eating mouse
+function updateEatingMouse() {
+    if (!eatingMouse) return;
+    
+    // Decrement the timer
+    eatingMouse.eatTimer--;
+    
+    // Find the closest target if we don't have one or if current target is gone
+    if (!eatingMouse.target || 
+        (eatingMouse.target.type === 'asteroid' && !asteroids.includes(eatingMouse.target.object)) ||
+        (eatingMouse.target.type === 'mine' && !mines.includes(eatingMouse.target.object)) ||
+        (eatingMouse.target.type === 'turret' && !turrets.includes(eatingMouse.target.object)) ||
+        (eatingMouse.target.type === 'armyMan' && !armyMen.includes(eatingMouse.target.object)) ||
+        (eatingMouse.target.type === 'rose' && !roses.includes(eatingMouse.target.object))) {
+        
+        eatingMouse.target = findClosestTarget();
+    }
+    
+    // Move toward the target
+    if (eatingMouse.target) {
+        const dx = eatingMouse.target.x - eatingMouse.x;
+        const dy = eatingMouse.target.y - eatingMouse.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance > 2) { // If not close enough to target
+            // Move toward target
+            eatingMouse.x += (dx / distance) * eatingMouse.speed;
+            eatingMouse.y += (dy / distance) * eatingMouse.speed;
+            
+            // Update angle to face target
+            eatingMouse.angle = Math.atan2(dy, dx);
+        } else {
+            // Eat the target
+            eatTarget(eatingMouse.target);
+            eatingMouse.target = null;
+        }
+    }
+    
+    // Remove mouse when timer expires
+    if (eatingMouse.eatTimer <= 0) {
+        eatingMouse = null;
+    }
+}
+
+// Find the closest target for the eating mouse
+function findClosestTarget() {
+    let closestTarget = null;
+    let closestDistance = Infinity;
+    
+    // Check asteroids
+    for (const asteroid of asteroids) {
+        const dx = asteroid.x - eatingMouse.x;
+        const dy = asteroid.y - eatingMouse.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestTarget = { type: 'asteroid', object: asteroid, x: asteroid.x, y: asteroid.y };
+        }
+    }
+    
+    // Check mines
+    for (const mine of mines) {
+        const dx = mine.x - eatingMouse.x;
+        const dy = mine.y - eatingMouse.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestTarget = { type: 'mine', object: mine, x: mine.x, y: mine.y };
+        }
+    }
+    
+    // Check turrets
+    for (const turret of turrets) {
+        const dx = turret.x - eatingMouse.x;
+        const dy = turret.y - eatingMouse.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestTarget = { type: 'turret', object: turret, x: turret.x, y: turret.y };
+        }
+    }
+    
+    // Check army men
+    for (const armyMan of armyMen) {
+        const dx = armyMan.x - eatingMouse.x;
+        const dy = armyMan.y - eatingMouse.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestTarget = { type: 'armyMan', object: armyMan, x: armyMan.x, y: armyMan.y };
+        }
+    }
+    
+    // Check roses
+    for (const rose of roses) {
+        const dx = rose.x - eatingMouse.x;
+        const dy = rose.y - eatingMouse.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestTarget = { type: 'rose', object: rose, x: rose.x, y: rose.y };
+        }
+    }
+    
+    return closestTarget;
+}
+
+// Eat a target
+function eatTarget(target) {
+    if (!target) return;
+    
+    switch (target.type) {
+        case 'asteroid':
+            // Find and remove the asteroid
+            const asteroidIndex = asteroids.indexOf(target.object);
+            if (asteroidIndex !== -1) {
+                createExplosion(target.object.x, target.object.y, false);
+                score += 10 * target.object.size;
+                asteroids.splice(asteroidIndex, 1);
+                
+                // If asteroid is large enough, split it
+                if (target.object.size > 1) {
+                    for (let k = 0; k < 2; k++) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const speed = Math.random() * 2 + 1;
+                        const velocityX = Math.cos(angle) * speed;
+                        const velocityY = Math.sin(angle) * speed;
+                        
+                        asteroids.push({
+                            x: target.object.x,
+                            y: target.object.y,
+                            radius: (target.object.size - 1) * 10,
+                            velocity: { x: velocityX, y: velocityY },
+                            size: target.object.size - 1,
+                            shapeType: Math.floor(Math.random() * 5)
+                        });
+                    }
+                }
+            }
+            break;
+            
+        case 'mine':
+            // Find and remove the mine
+            const mineIndex = mines.indexOf(target.object);
+            if (mineIndex !== -1) {
+                createExplosion(target.object.x, target.object.y, true);
+                score += 15 * target.object.size;
+                mines.splice(mineIndex, 1);
+                
+                // Check for objects within explosion radius
+                checkMineExplosion(target.object.x, target.object.y, 100);
+            }
+            break;
+            
+        case 'turret':
+            // Find and remove the turret
+            const turretIndex = turrets.indexOf(target.object);
+            if (turretIndex !== -1) {
+                createExplosion(target.object.x, target.object.y, false);
+                score += 50;
+                turrets.splice(turretIndex, 1);
+            }
+            break;
+            
+        case 'armyMan':
+            // Find and remove the army man
+            const armyManIndex = armyMen.indexOf(target.object);
+            if (armyManIndex !== -1) {
+                createExplosion(target.object.x, target.object.y, false);
+                score += 25;
+                armyMen.splice(armyManIndex, 1);
+            }
+            break;
+            
+        case 'rose':
+            // Find and remove the rose
+            const roseIndex = roses.indexOf(target.object);
+            if (roseIndex !== -1) {
+                createExplosion(target.object.x, target.object.y, false);
+                score += 75;
+                roses.splice(roseIndex, 1);
+            }
+            break;
+    }
+    
+    // Update score display
+    if (scoreValue) scoreValue.textContent = score;
 }
 
 // Draw the orbiting sword
