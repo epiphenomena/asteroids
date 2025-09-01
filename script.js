@@ -228,15 +228,8 @@ function resetGame() {
         visible: true
     };
     
-    // Create orbiting sword
-    sword = {
-        angle: 0, // Initial angle for orbit
-        distance: 30, // Distance from ship
-        radius: 5, // Size of the sword
-        orbitSpeed: 0.05, // Speed of orbit
-        length: 20, // Length of the sword
-        width: 3 // Width of the sword
-    };
+    // Reset sword (no sword at start)
+    sword = null;
     
     // Reset game state
     asteroids = [];
@@ -529,15 +522,24 @@ function createPowerup(x = null, y = null) {
         y = Math.sin(angle) * distance;
     }
     
-    // 30% chance for ship size powerup, 50% for bullet size, 20% for force field
-    const powerupType = Math.random() < 0.3 ? 'shipSize' : 
-                       Math.random() < 0.714 ? 'bulletSize' : 'forceField'; // 30% ship size, 50% bullet size, 20% force field
+    // 20% chance for ship size powerup, 20% for bullet size, 20% for force field, 40% for sword
+    const rand = Math.random();
+    let powerupType;
+    if (rand < 0.2) {
+        powerupType = 'shipSize';
+    } else if (rand < 0.4) {
+        powerupType = 'bulletSize';
+    } else if (rand < 0.6) {
+        powerupType = 'forceField';
+    } else {
+        powerupType = 'sword'; // Sword power-up
+    }
     
     const powerup = {
         x: x,
         y: y,
         radius: 12,
-        type: powerupType, // Type of powerup ('bulletSize', 'forceField', or 'shipSize')
+        type: powerupType, // Type of powerup ('bulletSize', 'forceField', 'shipSize', or 'sword')
         pulse: 0 // For animation
     };
     
@@ -1114,6 +1116,7 @@ function updateForceField() {
 
 // Update sword position
 function updateSword() {
+    // Only update if sword exists
     if (sword) {
         // Update the sword's orbit angle
         sword.angle += sword.orbitSpeed;
@@ -1572,6 +1575,25 @@ function checkCollisions() {
                     
                     // Increase score
                     score += 60; // Ship size powerups are worth 60 points
+                    if (scoreValue) scoreValue.textContent = score;
+                } else if (powerup.type === 'sword') {
+                    // Create orbiting sword
+                    if (!sword) {
+                        sword = {
+                            angle: 0, // Initial angle for orbit
+                            distance: 30, // Distance from ship
+                            radius: 5, // Size of the sword
+                            orbitSpeed: 0.05, // Speed of orbit
+                            length: 20, // Length of the sword
+                            width: 3 // Width of the sword
+                        };
+                    }
+                    
+                    // Create visual effect
+                    createExplosion(powerup.x, powerup.y, false);
+                    
+                    // Increase score
+                    score += 100; // Sword powerups are worth 100 points
                     if (scoreValue) scoreValue.textContent = score;
                 }
                 
@@ -2132,6 +2154,28 @@ function drawPowerups() {
             ctx.lineTo((powerup.radius + pulseSize), (powerup.radius + pulseSize)); // Bottom right
             ctx.closePath();
             ctx.stroke();
+        } else if (powerup.type === 'sword') {
+            // Draw sword powerup as a crossed swords (silver/gray)
+            ctx.strokeStyle = 'silver';
+            ctx.lineWidth = 2;
+            
+            // Draw first sword (vertical)
+            ctx.beginPath();
+            ctx.moveTo(0, -(powerup.radius + pulseSize)); // Top
+            ctx.lineTo(0, (powerup.radius + pulseSize)); // Bottom
+            ctx.stroke();
+            
+            // Draw cross guard
+            ctx.beginPath();
+            ctx.moveTo(-(powerup.radius + pulseSize) * 0.7, 0);
+            ctx.lineTo((powerup.radius + pulseSize) * 0.7, 0);
+            ctx.stroke();
+            
+            // Draw second sword (horizontal)
+            ctx.beginPath();
+            ctx.moveTo(-(powerup.radius + pulseSize) * 0.7, (powerup.radius + pulseSize) * 0.7);
+            ctx.lineTo((powerup.radius + pulseSize) * 0.7, -(powerup.radius + pulseSize) * 0.7);
+            ctx.stroke();
         }
         ctx.restore();
     }
@@ -2269,6 +2313,7 @@ function drawRadarIndicators() {
 
 // Draw the orbiting sword
 function drawSword() {
+    // Only draw if sword exists
     if (!sword) return;
     
     // Calculate sword position based on orbit around the ship
