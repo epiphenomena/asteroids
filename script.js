@@ -218,7 +218,7 @@ function resetGame() {
         rotationSpeed: 0.05,
         acceleration: 0.65, // Decreased from 0.75 to 0.65 (15% slower)
         maxSpeed: 5.0, // Decreased from 5.75 to 5.0 (15% slower)
-        friction: 0.98,
+        friction: 0.95, // Reduced friction for better momentum (was 0.98)
         shootCooldown: 0,
         maxShootCooldown: 20, // 20% slower firing rate (17 / 0.8 ≈ 20)
         invincible: false,
@@ -882,14 +882,11 @@ function updateMines() {
         const topEdge = - canvas.height / 2 - buffer;
         const bottomEdge = canvas.height / 2 + buffer;
         
-        // Convert relative position to absolute for wrapping
-        const absoluteX = mine.worldX;
-        const absoluteY = mine.worldY;
-        
-        if (absoluteX < leftEdge) mine.worldX = rightEdge;
-        if (absoluteX > rightEdge) mine.worldX = leftEdge;
-        if (absoluteY < topEdge) mine.worldY = bottomEdge;
-        if (absoluteY > bottomEdge) mine.worldY = topEdge;
+        // Wrap mines when they go off-screen
+        if (mine.worldX < leftEdge) mine.worldX = rightEdge;
+        if (mine.worldX > rightEdge) mine.worldX = leftEdge;
+        if (mine.worldY < topEdge) mine.worldY = bottomEdge;
+        if (mine.worldY > bottomEdge) mine.worldY = topEdge;
         
         // Update relative position after wrapping
         mine.x = mine.worldX - ship.x;
