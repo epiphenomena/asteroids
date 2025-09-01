@@ -1237,7 +1237,8 @@ function checkCollisions() {
                             y: asteroid.y,
                             radius: (asteroid.size - 1) * 10,
                             velocity: { x: velocityX, y: velocityY },
-                            size: asteroid.size - 1
+                            size: asteroid.size - 1,
+                            shapeType: Math.floor(Math.random() * 5) // Assign a random shape type (0-4)
                         });
                     }
                 }
@@ -1386,7 +1387,8 @@ function checkCollisions() {
                                 y: asteroid.y,
                                 radius: (asteroid.size - 1) * 10,
                                 velocity: { x: velocityX, y: velocityY },
-                                size: asteroid.size - 1
+                                size: asteroid.size - 1,
+                                shapeType: Math.floor(Math.random() * 5) // Assign a random shape type (0-4)
                             });
                         }
                     }
@@ -1832,7 +1834,8 @@ function checkMineExplosion(x, y, radius) {
                         y: asteroid.y,
                         radius: (asteroid.size - 1) * 10,
                         velocity: { x: velocityX, y: velocityY },
-                        size: asteroid.size - 1
+                        size: asteroid.size - 1,
+                        shapeType: Math.floor(Math.random() * 5) // Assign a random shape type (0-4)
                     });
                 }
             }
