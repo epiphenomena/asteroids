@@ -527,33 +527,21 @@ function createPowerup(x = null, y = null) {
         y = Math.sin(angle) * distance;
     }
     
-    // 50% chance for ship destroy trap powerup, 8% for each other powerup type, 2% for eat everything
-    // This maintains the trap as most common while adding the new power-up
+    // 50% chance for eat everything mouse powerup, 50% for ship destroy trap powerup
+    // This makes the mouse power-up much more common
     const rand = Math.random();
     let powerupType;
     if (rand < 0.50) {
-        powerupType = 'shipDestroy'; // Ship destroy trap power-up (50% chance)
-    } else if (rand < 0.58) {
-        powerupType = 'shipSize';
-    } else if (rand < 0.66) {
-        powerupType = 'bulletSize';
-    } else if (rand < 0.74) {
-        powerupType = 'forceField';
-    } else if (rand < 0.82) {
-        powerupType = 'sword'; // Sword power-up (8% chance)
-    } else if (rand < 0.90) {
-        powerupType = 'speedBoost'; // Speed boost power-up (8% chance)
-    } else if (rand < 0.98) {
-        powerupType = 'shipShape'; // Ship shape power-up (8% chance)
+        powerupType = 'eatEverything'; // Eat everything mouse power-up (50% chance)
     } else {
-        powerupType = 'eatEverything'; // Eat everything power-up (2% chance)
+        powerupType = 'shipDestroy'; // Ship destroy trap power-up (50% chance)
     }
     
     const powerup = {
         x: x,
         y: y,
         radius: 12,
-        type: powerupType, // Type of powerup ('bulletSize', 'forceField', 'shipSize', 'sword', 'speedBoost', 'shipShape', 'shipDestroy', or 'eatEverything')
+        type: powerupType, // Type of powerup ('shipDestroy' or 'eatEverything')
         pulse: 0 // For animation
     };
     
@@ -2578,30 +2566,66 @@ function drawPowerups() {
             ctx.stroke();
             ctx.setLineDash([]); // Reset line dash
         } else if (powerup.type === 'eatEverything') {
-            // Draw eat everything powerup as a mouth with teeth (bright green)
-            ctx.strokeStyle = 'lime';
+            // Draw eat everything powerup as a cute mouse (gray with pink ears and nose)
+            ctx.strokeStyle = 'gray';
+            ctx.fillStyle = 'gray';
             ctx.lineWidth = 2;
             
-            // Draw mouth (semi-circle)
+            // Draw mouse body (circle)
             ctx.beginPath();
-            ctx.arc(0, 0, powerup.radius + pulseSize, 0, Math.PI);
+            ctx.arc(0, 0, powerup.radius + pulseSize, 0, Math.PI * 2);
+            ctx.fill();
             ctx.stroke();
             
-            // Draw teeth
-            const toothCount = 5;
-            const toothWidth = (powerup.radius + pulseSize) * 2 / toothCount;
-            for (let i = 0; i < toothCount; i++) {
-                const toothX = -powerup.radius - pulseSize + (i + 0.5) * toothWidth;
-                ctx.beginPath();
-                ctx.moveTo(toothX, 0);
-                ctx.lineTo(toothX, -powerup.radius * 0.5);
-                ctx.stroke();
-            }
-            
-            // Draw eyes (to make it look like a hungry face)
+            // Draw ears (two small circles)
+            ctx.fillStyle = 'pink';
             ctx.beginPath();
-            ctx.arc(-powerup.radius * 0.5, -powerup.radius * 0.3, powerup.radius * 0.2, 0, Math.PI * 2);
-            ctx.arc(powerup.radius * 0.5, -powerup.radius * 0.3, powerup.radius * 0.2, 0, Math.PI * 2);
+            ctx.arc(-powerup.radius * 0.6, -powerup.radius * 0.6, powerup.radius * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.arc(powerup.radius * 0.6, -powerup.radius * 0.6, powerup.radius * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Draw nose (small black circle)
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(0, powerup.radius * 0.2, powerup.radius * 0.2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw eyes (two small white circles with black pupils)
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(-powerup.radius * 0.4, -powerup.radius * 0.2, powerup.radius * 0.25, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.arc(powerup.radius * 0.4, -powerup.radius * 0.2, powerup.radius * 0.25, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Draw pupils
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(-powerup.radius * 0.4, -powerup.radius * 0.2, powerup.radius * 0.1, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(powerup.radius * 0.4, -powerup.radius * 0.2, powerup.radius * 0.1, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw tail (curved line)
+            ctx.strokeStyle = 'gray';
+            ctx.beginPath();
+            ctx.moveTo(powerup.radius * 0.8, powerup.radius * 0.3);
+            ctx.bezierCurveTo(
+                powerup.radius * 1.2, powerup.radius * 0.5,
+                powerup.radius * 1.2, -powerup.radius * 0.5,
+                powerup.radius * 0.8, -powerup.radius * 0.3
+            );
             ctx.stroke();
         }
         ctx.restore();
