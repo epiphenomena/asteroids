@@ -30,6 +30,8 @@ let originalMaxSpeed = 0; // Store original max speed
 let shipShape = 'triangle'; // Current ship shape ('triangle', 'diamond', 'pentagon', 'hexagon', 'square')
 let shipShapeTimer = 0; // Timer for ship shape duration
 let originalShipShape = 'triangle'; // Store original ship shape
+let eatEverythingActive = false; // Track if eat everything effect is active
+let eatEverythingTimer = 0; // Timer for eat everything duration
 let score = 0;
 let lives = 3;
 let highScore = 0;
@@ -247,6 +249,10 @@ function resetGame() {
     shipShapeTimer = 0;
     originalShipShape = 'triangle';
     
+    // Reset eat everything effect
+    eatEverythingActive = false;
+    eatEverythingTimer = 0;
+    
     // Reset game state
     asteroids = [];
     bullets = [];
@@ -262,23 +268,6 @@ function resetGame() {
     waveTimer = 0; // Reset wave timer
     forceFieldActive = false; // Reset force field
     forceFieldLifetime = 0; // Reset force field lifetime
-    
-    // Spawn initial wave enemies
-    spawnWaveEnemies();
-    
-    score = 0;
-    lives = 3;
-    gameOver = false;
-    
-    // Update UI
-    if (scoreValue) scoreValue.textContent = score;
-    if (livesValue) livesValue.textContent = lives;
-    
-    // Hide game over screen if it's visible
-    if (gameOverScreen) {
-        gameOverScreen.classList.remove('show');
-        gameOverScreen.style.display = 'none';
-    }
 }
 
 // Create a specified number of asteroids
@@ -538,31 +527,33 @@ function createPowerup(x = null, y = null) {
         y = Math.sin(angle) * distance;
     }
     
-    // 50% chance for ship destroy trap powerup, 10% for each other powerup type
-    // This makes the trap power-up much more common
+    // 50% chance for ship destroy trap powerup, 8% for each other powerup type, 2% for eat everything
+    // This maintains the trap as most common while adding the new power-up
     const rand = Math.random();
     let powerupType;
     if (rand < 0.50) {
         powerupType = 'shipDestroy'; // Ship destroy trap power-up (50% chance)
-    } else if (rand < 0.60) {
+    } else if (rand < 0.58) {
         powerupType = 'shipSize';
-    } else if (rand < 0.70) {
+    } else if (rand < 0.66) {
         powerupType = 'bulletSize';
-    } else if (rand < 0.80) {
+    } else if (rand < 0.74) {
         powerupType = 'forceField';
+    } else if (rand < 0.82) {
+        powerupType = 'sword'; // Sword power-up (8% chance)
     } else if (rand < 0.90) {
-        powerupType = 'sword'; // Sword power-up (10% chance)
-    } else if (rand < 0.95) {
-        powerupType = 'speedBoost'; // Speed boost power-up (5% chance)
+        powerupType = 'speedBoost'; // Speed boost power-up (8% chance)
+    } else if (rand < 0.98) {
+        powerupType = 'shipShape'; // Ship shape power-up (8% chance)
     } else {
-        powerupType = 'shipShape'; // Ship shape power-up (5% chance)
+        powerupType = 'eatEverything'; // Eat everything power-up (2% chance)
     }
     
     const powerup = {
         x: x,
         y: y,
         radius: 12,
-        type: powerupType, // Type of powerup ('bulletSize', 'forceField', 'shipSize', 'sword', 'speedBoost', 'shipShape', or 'shipDestroy')
+        type: powerupType, // Type of powerup ('bulletSize', 'forceField', 'shipSize', 'sword', 'speedBoost', 'shipShape', 'shipDestroy', or 'eatEverything')
         pulse: 0 // For animation
     };
     
@@ -1127,7 +1118,7 @@ function updateParticles() {
     }
 }
 
-// Update timed effects (force field, speed boost, ship shape)
+// Update timed effects (force field, speed boost, ship shape, eat everything)
 function updateTimedEffects() {
     // Update force field
     if (forceFieldActive) {
@@ -1154,6 +1145,14 @@ function updateTimedEffects() {
             if (shipShapeTimer <= 0) {
                 shipShape = originalShipShape; // Reset to original ship shape
             }
+        }
+    }
+    
+    // Update eat everything timer
+    if (eatEverythingActive) {
+        eatEverythingTimer--;
+        if (eatEverythingTimer <= 0) {
+            eatEverythingActive = false;
         }
     }
 }
@@ -1842,6 +1841,20 @@ function checkCollisions() {
                     
                     // Create visual effect at powerup location
                     createExplosion(powerup.x, powerup.y, true); // Large explosion
+                } else if (powerup.type === 'eatEverything') {
+                    // Activate eat everything effect for 7 seconds
+                    eatEverythingActive = true;
+                    eatEverythingTimer = 420; // 7 seconds at 60fps
+                    
+                    // Destroy all current enemies and objects
+                    destroyAllEnemies();
+                    
+                    // Add visual effect
+                    createExplosion(powerup.x, powerup.y, true); // Large explosion
+                    
+                    // Increase score
+                    score += 200; // Eat everything powerups are worth 200 points
+                    if (scoreValue) scoreValue.textContent = score;
                 }
                 
                 // Remove the powerup
@@ -2002,6 +2015,59 @@ function getSwordPosition() {
     return null;
 }
 
+// Destroy all enemies and objects
+function destroyAllEnemies() {
+    // Create explosions for all asteroids
+    for (const asteroid of asteroids) {
+        createExplosion(asteroid.x, asteroid.y, false);
+        // Increase score for each asteroid
+        score += 10 * asteroid.size;
+    }
+    
+    // Create explosions for all mines
+    for (const mine of mines) {
+        createExplosion(mine.x, mine.y, true);
+        // Increase score for each mine
+        score += 15 * mine.size;
+    }
+    
+    // Create explosions for all turrets
+    for (const turret of turrets) {
+        createExplosion(turret.x, turret.y, false);
+        // Increase score for each turret
+        score += 50;
+    }
+    
+    // Create explosions for all army men
+    for (const armyMan of armyMen) {
+        createExplosion(armyMan.x, armyMan.y, false);
+        // Increase score for each army man
+        score += 25;
+    }
+    
+    // Create explosions for all roses
+    for (const rose of roses) {
+        createExplosion(rose.x, rose.y, false);
+        // Increase score for each rose
+        score += 75;
+    }
+    
+    // Update score display
+    if (scoreValue) scoreValue.textContent = score;
+    
+    // Clear all enemy arrays
+    asteroids = [];
+    mines = [];
+    turrets = [];
+    armyMen = [];
+    roses = [];
+    
+    // Clear rose poison bullets
+    for (const rose of roses) {
+        rose.poisonBullets = [];
+    }
+}
+
 // Split an asteroid into smaller ones or remove it
 function splitAsteroid(index) {
     // Check if index is valid
@@ -2084,6 +2150,11 @@ function render() {
         
         // Draw force field if active
         drawForceField();
+        
+        // Draw eat everything effect if active
+        if (eatEverythingActive) {
+            drawEatEverythingEffect();
+        }
         
         // Draw radar indicators for off-screen objects
         drawRadarIndicators();
@@ -2506,6 +2577,32 @@ function drawPowerups() {
             ctx.arc(0, 0, powerup.radius + pulseSize, 0, Math.PI * 2);
             ctx.stroke();
             ctx.setLineDash([]); // Reset line dash
+        } else if (powerup.type === 'eatEverything') {
+            // Draw eat everything powerup as a mouth with teeth (bright green)
+            ctx.strokeStyle = 'lime';
+            ctx.lineWidth = 2;
+            
+            // Draw mouth (semi-circle)
+            ctx.beginPath();
+            ctx.arc(0, 0, powerup.radius + pulseSize, 0, Math.PI);
+            ctx.stroke();
+            
+            // Draw teeth
+            const toothCount = 5;
+            const toothWidth = (powerup.radius + pulseSize) * 2 / toothCount;
+            for (let i = 0; i < toothCount; i++) {
+                const toothX = -powerup.radius - pulseSize + (i + 0.5) * toothWidth;
+                ctx.beginPath();
+                ctx.moveTo(toothX, 0);
+                ctx.lineTo(toothX, -powerup.radius * 0.5);
+                ctx.stroke();
+            }
+            
+            // Draw eyes (to make it look like a hungry face)
+            ctx.beginPath();
+            ctx.arc(-powerup.radius * 0.5, -powerup.radius * 0.3, powerup.radius * 0.2, 0, Math.PI * 2);
+            ctx.arc(powerup.radius * 0.5, -powerup.radius * 0.3, powerup.radius * 0.2, 0, Math.PI * 2);
+            ctx.stroke();
         }
         ctx.restore();
     }
@@ -2716,6 +2813,31 @@ function drawRadarIndicators() {
     for (const armyMan of armyMen) {
         drawRadarIndicator(armyMan.x, armyMan.y, 'red');
     }
+}
+
+// Draw eat everything effect
+function drawEatEverythingEffect() {
+    // Draw a pulsing green circle around the ship
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    
+    // Calculate pulse effect
+    const pulse = Math.sin(Date.now() / 100) * 0.5 + 0.5;
+    const radius = 50 + pulse * 20;
+    
+    // Draw multiple circles for a wave effect
+    for (let i = 0; i < 3; i++) {
+        const alpha = (1 - i * 0.3) * 0.7;
+        const currentRadius = radius - i * 15;
+        
+        ctx.strokeStyle = `rgba(0, 255, 0, ${alpha})`;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(0, 0, currentRadius, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+    
+    ctx.restore();
 }
 
 // Draw the orbiting sword
