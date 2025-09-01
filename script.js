@@ -217,8 +217,8 @@ function resetGame() {
         velocity: { x: 0, y: 0 },
         rotationSpeed: 0.05,
         acceleration: 0.65, // Decreased from 0.75 to 0.65 (15% slower)
-        maxSpeed: 5.0, // Decreased from 5.75 to 5.0 (15% slower)
-        friction: 0.95, // Reduced friction for better momentum (was 0.98)
+        maxSpeed: 5.5, // Increased from 5.0 for more momentum
+        friction: 0.92, // Further reduced friction for even better momentum (was 0.95)
         shootCooldown: 0,
         maxShootCooldown: 20, // 20% slower firing rate (17 / 0.8 ≈ 20)
         invincible: false,
