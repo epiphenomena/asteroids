@@ -2321,8 +2321,8 @@ function drawRadarIndicators() {
 
 // Draw the orbiting sword
 function drawSword() {
-    // Only draw if sword exists and ship is not invincible
-    if (!sword || (ship && ship.invincible)) return;
+    // Only draw if sword exists and ship is visible (not dead)
+    if (!sword || (ship && !ship.visible)) return;
     
     // Calculate sword position based on orbit around the ship
     // The ship is always at the center of the screen (canvas.width/2, canvas.height/2)
