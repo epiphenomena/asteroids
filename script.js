@@ -23,6 +23,7 @@ let turrets = []; // Array to hold turrets
 let armyMen = []; // Array to hold army men
 let powerups = []; // Array to hold powerups
 let roses = []; // Array to hold roses
+let sword; // Object to hold the orbiting sword
 let score = 0;
 let lives = 3;
 let highScore = 0;
@@ -225,6 +226,16 @@ function resetGame() {
         invincibilityTime: 0,
         respawnTime: 0,
         visible: true
+    };
+    
+    // Create orbiting sword
+    sword = {
+        angle: 0, // Initial angle for orbit
+        distance: 30, // Distance from ship
+        radius: 5, // Size of the sword
+        orbitSpeed: 0.05, // Speed of orbit
+        length: 20, // Length of the sword
+        width: 3 // Width of the sword
     };
     
     // Reset game state
@@ -615,6 +626,9 @@ function update() {
     
     // Update particles
     updateParticles();
+    
+    // Update sword
+    updateSword();
     
     // Update force field
     updateForceField();
@@ -1094,6 +1108,19 @@ function updateForceField() {
         forceFieldLifetime--;
         if (forceFieldLifetime <= 0) {
             forceFieldActive = false;
+        }
+    }
+}
+
+// Update sword position
+function updateSword() {
+    if (sword) {
+        // Update the sword's orbit angle
+        sword.angle += sword.orbitSpeed;
+        
+        // Keep angle within 0-2π range
+        if (sword.angle > Math.PI * 2) {
+            sword.angle -= Math.PI * 2;
         }
     }
 }
@@ -1762,6 +1789,9 @@ function render() {
         // Draw roses
         drawRoses();
         
+        // Draw sword
+        drawSword();
+        
         // Draw ship at the center of the screen
         drawShipAtCenter();
         
@@ -2235,6 +2265,43 @@ function drawRadarIndicators() {
     for (const armyMan of armyMen) {
         drawRadarIndicator(armyMan.x, armyMan.y, 'red');
     }
+}
+
+// Draw the orbiting sword
+function drawSword() {
+    if (!sword) return;
+    
+    // Calculate sword position based on orbit around the ship
+    // The ship is always at the center of the screen (canvas.width/2, canvas.height/2)
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    
+    // Calculate sword position based on orbit angle and distance
+    const swordX = centerX + Math.cos(sword.angle) * sword.distance;
+    const swordY = centerY + Math.sin(sword.angle) * sword.distance;
+    
+    // Draw the sword as a rectangle (blade) with a triangular hilt
+    ctx.save();
+    
+    // Rotate the sword to face outward from the ship
+    ctx.translate(swordX, swordY);
+    ctx.rotate(sword.angle);
+    
+    // Draw sword blade (rectangle)
+    ctx.fillStyle = 'silver';
+    ctx.fillRect(-sword.length / 2, -sword.width / 2, sword.length, sword.width);
+    
+    // Draw sword hilt (rectangle)
+    ctx.fillStyle = 'goldenrod';
+    ctx.fillRect(-sword.length / 2 - 5, -sword.width, 5, sword.width * 2);
+    
+    // Draw sword pommel (circle)
+    ctx.fillStyle = 'gold';
+    ctx.beginPath();
+    ctx.arc(-sword.length / 2 - 5, 0, sword.width, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.restore();
 }
 
 // Draw a radar indicator for an off-screen object
