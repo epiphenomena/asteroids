@@ -88,36 +88,60 @@ function saveHighScore() {
     }
 }
 
+// Start game function
+function startGame() {
+    if (startScreen) {
+        startScreen.style.display = 'none';
+    }
+    // Also hide game over screen if it's visible
+    if (gameOverScreen) {
+        gameOverScreen.classList.remove('show');
+        gameOverScreen.style.display = 'none';
+    }
+    gameStarted = true;
+    resetGame();
+}
+
+// Restart game function
+function restartGame() {
+    if (gameOverScreen) {
+        gameOverScreen.classList.remove('show');
+        // Also hide explicitly to ensure it's hidden
+        gameOverScreen.style.display = 'none';
+    }
+    gameStarted = true;
+    gameOver = false;
+    resetGame();
+}
+
 // Setup event listeners
 function setupEventListeners() {
     // Start button
     startButton.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (startScreen) {
-            startScreen.style.display = 'none';
-        }
-        // Also hide game over screen if it's visible
-        if (gameOverScreen) {
-            gameOverScreen.classList.remove('show');
-            gameOverScreen.style.display = 'none';
-        }
-        gameStarted = true;
-        resetGame();
+        startGame();
+    });
+    
+    // Also add touch event for mobile devices
+    startButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        startGame();
     });
     
     // Restart button
     restartButton.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (gameOverScreen) {
-            gameOverScreen.classList.remove('show');
-            // Also hide explicitly to ensure it's hidden
-            gameOverScreen.style.display = 'none';
-        }
-        gameStarted = true;
-        gameOver = false;
-        resetGame();
+        restartGame();
+    });
+    
+    // Also add touch event for mobile devices
+    restartButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        restartGame();
     });
     
     // Prevent touch events on screens from propagating
@@ -166,7 +190,8 @@ function setupEventListeners() {
     
     // Prevent default touch behaviors
     document.addEventListener('touchstart', (e) => {
-        if (e.target === canvas) {
+        // Only prevent default on the canvas, not on buttons
+        if (e.target === canvas || e.target === startScreen || e.target === gameOverScreen) {
             e.preventDefault();
         }
     }, { passive: false });
