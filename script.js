@@ -1760,7 +1760,7 @@ function checkCollisions() {
                     if (!speedBoostActive) {
                         speedBoostActive = true;
                         originalMaxSpeed = ship.maxSpeed; // Store original max speed
-                        ship.maxSpeed = originalMaxSpeed * 1.15; // Increase speed by 15%
+                        ship.maxSpeed = originalMaxSpeed * 1.25; // Increase speed by 25%
                         speedBoostTimer = 600; // 10 seconds at 60fps
                         
                         // Add visual effect
