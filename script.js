@@ -596,10 +596,10 @@ function createFoot(x = null, y = null) {
     // Check if there's already a foot at this position (or very close)
     let isPositionOccupied = false;
     for (const foot of feet) {
-        const dx = foot.x - x;
-        const dy = foot.y - y;
+        const dx = foot.worldX - x;
+        const dy = foot.worldY - y;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance < 40) { // If another foot is within 40 pixels, consider position occupied
+        if (distance < 100) { // If another foot is within 100 pixels, consider position occupied
             isPositionOccupied = true;
             break;
         }
@@ -616,10 +616,10 @@ function createFoot(x = null, y = null) {
             
             isPositionOccupied = false;
             for (const foot of feet) {
-                const dx = foot.x - x;
-                const dy = foot.y - y;
+                const dx = foot.worldX - x;
+                const dy = foot.worldY - y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
-                if (distance < 40) {
+                if (distance < 100) {
                     isPositionOccupied = true;
                     break;
                 }
@@ -629,9 +629,11 @@ function createFoot(x = null, y = null) {
     }
     
     const foot = {
-        x: x,
-        y: y,
-        radius: 20,
+        x: 0, // Relative position (will be calculated based on world position)
+        y: 0, // Relative position (will be calculated based on world position)
+        worldX: x, // Absolute world coordinates (not affected by ship movement)
+        worldY: y, // Absolute world coordinates (not affected by ship movement)
+        radius: 60, // Much larger radius (3x larger)
         stampCooldown: 0,
         maxStampCooldown: 180, // 3 seconds at 60fps
         stampEffect: 0 // For animation
@@ -1135,6 +1137,12 @@ function updateRoses() {
 // Update feet
 function updateFeet() {
     for (const foot of feet) {
+        // Update position using absolute world coordinates
+        // Feet don't move, so their world coordinates stay the same
+        // Update relative position for rendering and collision detection
+        foot.x = foot.worldX - ship.x;
+        foot.y = foot.worldY - ship.y;
+        
         // Update stamp cooldown
         if (foot.stampCooldown > 0) {
             foot.stampCooldown--;
@@ -1153,18 +1161,6 @@ function updateFeet() {
             // Reset cooldown
             foot.stampCooldown = foot.maxStampCooldown;
         }
-        
-        // Screen wrapping
-        const buffer = 100; // Distance from screen edge
-        const leftEdge = - canvas.width / 2 - buffer;
-        const rightEdge = canvas.width / 2 + buffer;
-        const topEdge = - canvas.height / 2 - buffer;
-        const bottomEdge = canvas.height / 2 + buffer;
-        
-        if (foot.x < leftEdge) foot.x = rightEdge;
-        if (foot.x > rightEdge) foot.x = leftEdge;
-        if (foot.y < topEdge) foot.y = bottomEdge;
-        if (foot.y > bottomEdge) foot.y = topEdge;
     }
 }
 
@@ -2905,12 +2901,17 @@ function drawFeet() {
         ctx.ellipse(0, 0, foot.radius, foot.radius * 0.7, 0, 0, Math.PI * 2);
         ctx.stroke();
         
-        // Draw toe details
+        // Draw toe details (scaled up for larger foot)
         ctx.beginPath();
         ctx.moveTo(-foot.radius * 0.7, -foot.radius * 0.3);
         ctx.lineTo(-foot.radius * 0.3, -foot.radius * 0.6);
         ctx.lineTo(foot.radius * 0.3, -foot.radius * 0.6);
         ctx.lineTo(foot.radius * 0.7, -foot.radius * 0.3);
+        ctx.stroke();
+        
+        // Draw heel
+        ctx.beginPath();
+        ctx.arc(0, foot.radius * 0.2, foot.radius * 0.4, 0, Math.PI);
         ctx.stroke();
         
         ctx.restore();
