@@ -1346,6 +1346,125 @@ function checkCollisions() {
         }
     }
     
+    // Check for sword collisions (only if sword exists and ship is visible)
+    if (sword && ship && ship.visible) {
+        const swordPos = getSwordPosition();
+        if (swordPos) {
+            // Define sword hitbox size (larger than visual representation for better gameplay)
+            const swordHitboxRadius = sword.length * 0.8; // Use 80% of sword length as hitbox
+            
+            // Check for sword-asteroid collisions
+            for (let i = 0; i < asteroids.length; i++) {
+                const asteroid = asteroids[i];
+                
+                // Check collision with sword hitbox
+                if (distance(swordPos.x, swordPos.y, asteroid.x, asteroid.y) < swordHitboxRadius + asteroid.radius) {
+                    // Create explosion particles
+                    createExplosion(asteroid.x, asteroid.y, false);
+                    
+                    // Increase score
+                    score += 10 * asteroid.size;
+                    if (scoreValue) scoreValue.textContent = score;
+                    
+                    // Remove the asteroid
+                    asteroids.splice(i, 1);
+                    
+                    // If asteroid is large (size 3), split it into medium ones (size 2)
+                    // Medium asteroids (size 2) split into small ones (size 1)
+                    // Small asteroids (size 1) are just destroyed
+                    if (asteroid.size > 1) {
+                        // Create two smaller asteroids
+                        for (let k = 0; k < 2; k++) {
+                            // Add some variance to the angle
+                            const angle = Math.random() * Math.PI * 2;
+                            const speed = Math.random() * 2 + 1;
+                            const velocityX = Math.cos(angle) * speed;
+                            const velocityY = Math.sin(angle) * speed;
+                            
+                            asteroids.push({
+                                x: asteroid.x,
+                                y: asteroid.y,
+                                radius: (asteroid.size - 1) * 10,
+                                velocity: { x: velocityX, y: velocityY },
+                                size: asteroid.size - 1
+                            });
+                        }
+                    }
+                    
+                    // Break after processing one collision
+                    break;
+                }
+            }
+            
+            // Check for sword-mine collisions
+            for (let i = 0; i < mines.length; i++) {
+                const mine = mines[i];
+                
+                // Check collision with sword hitbox
+                if (distance(swordPos.x, swordPos.y, mine.x, mine.y) < swordHitboxRadius + mine.radius) {
+                    // Create mine explosion that affects nearby objects
+                    const explosionRadius = 100; // Approximately 1 inch at typical screen resolution
+                    createExplosion(mine.x, mine.y, true);
+                    
+                    // Increase score
+                    score += 15 * mine.size; // Mines are worth more points
+                    if (scoreValue) scoreValue.textContent = score;
+                    
+                    // Remove the mine that was hit
+                    mines.splice(i, 1);
+                    
+                    // Check for objects within explosion radius
+                    checkMineExplosion(mine.x, mine.y, explosionRadius);
+                    
+                    // Break after processing one collision
+                    break;
+                }
+            }
+            
+            // Check for sword-turret collisions
+            for (let i = 0; i < turrets.length; i++) {
+                const turret = turrets[i];
+                
+                // Check collision with sword hitbox
+                if (distance(swordPos.x, swordPos.y, turret.x, turret.y) < swordHitboxRadius + turret.radius) {
+                    // Create explosion particles for turret
+                    createExplosion(turret.x, turret.y, false);
+                    
+                    // Increase score
+                    score += 50; // Turrets are worth 50 points
+                    if (scoreValue) scoreValue.textContent = score;
+                    
+                    // Remove the turret that was hit
+                    turrets.splice(i, 1);
+                    
+                    // Break after processing one collision
+                    break;
+                }
+            }
+            
+            // Check for sword-army man collisions
+            for (let i = 0; i < armyMen.length; i++) {
+                const armyMan = armyMen[i];
+                
+                // Check collision with sword hitbox
+                if (distance(swordPos.x, swordPos.y, armyMan.x, armyMan.y) < swordHitboxRadius + armyMan.radius) {
+                    // Create explosion particles
+                    createExplosion(armyMan.x, armyMan.y, false);
+                    
+                    // Increase score
+                    score += 25; // Army men are worth 25 points
+                    if (scoreValue) scoreValue.textContent = score;
+                    
+                    // Remove army man
+                    armyMen.splice(i, 1);
+                    
+                    // Break after processing one collision
+                    break;
+                }
+            }
+        }
+    }
+    
     // Check for ship-asteroid collisions (only if ship is not invincible and visible)
     if (!ship.invincible && ship.visible) {
         for (let i = 0; i < asteroids.length; i++) {
@@ -1743,6 +1862,18 @@ function distance(x1, y1, x2, y2) {
     const dx = x2 - x1;
     const dy = y2 - y1;
     return Math.sqrt(dx * dx + dy * dy);
+}
+
+// Calculate the current position of the sword for collision detection
+function getSwordPosition() {
+    // Only calculate if sword exists
+    if (!sword) return null;
+    
+    // Calculate sword position based on orbit around the ship (which is at 0,0 in world coordinates)
+    const swordX = Math.cos(sword.angle) * sword.distance;
+    const swordY = Math.sin(sword.angle) * sword.distance;
+    
+    return { x: swordX, y: swordY };
 }
 
 // Split an asteroid into smaller ones or remove it
