@@ -1577,20 +1577,28 @@ function checkCollisions() {
                     score += 60; // Ship size powerups are worth 60 points
                     if (scoreValue) scoreValue.textContent = score;
                 } else if (powerup.type === 'sword') {
-                    // Create orbiting sword
+                    // Create or enhance orbiting sword
                     if (!sword) {
+                        // Create first sword
                         sword = {
                             angle: 0, // Initial angle for orbit
                             distance: 30, // Distance from ship
                             radius: 5, // Size of the sword
                             orbitSpeed: 0.05, // Speed of orbit
                             length: 20, // Length of the sword
-                            width: 3 // Width of the sword
+                            width: 3, // Width of the sword
+                            count: 1 // Number of swords collected
                         };
+                    } else {
+                        // Stack swords - increase orbit speed and visual size
+                        sword.count++;
+                        sword.orbitSpeed = 0.05 * sword.count; // Increase orbit speed with each collection
+                        sword.length = 20 + (sword.count - 1) * 5; // Increase length
+                        sword.width = 3 + (sword.count - 1) * 1; // Increase width
+                        
+                        // Add visual effect for stacking
+                        createExplosion(powerup.x, powerup.y, false);
                     }
-                    
-                    // Create visual effect
-                    createExplosion(powerup.x, powerup.y, false);
                     
                     // Increase score
                     score += 100; // Sword powerups are worth 100 points
@@ -2313,8 +2321,8 @@ function drawRadarIndicators() {
 
 // Draw the orbiting sword
 function drawSword() {
-    // Only draw if sword exists
-    if (!sword) return;
+    // Only draw if sword exists and ship is not invincible
+    if (!sword || (ship && ship.invincible)) return;
     
     // Calculate sword position based on orbit around the ship
     // The ship is always at the center of the screen (canvas.width/2, canvas.height/2)
