@@ -1828,9 +1828,148 @@ function drawAsteroids() {
         const screenX = asteroid.x - ship.x + canvas.width / 2;
         const screenY = asteroid.y - ship.y + canvas.height / 2;
         
-        ctx.beginPath();
-        ctx.arc(screenX, screenY, asteroid.radius, 0, Math.PI * 2);
-        ctx.stroke();
+        // Generate a unique shape for each asteroid based on its size and position
+        drawAsteroidShape(screenX, screenY, asteroid.radius, asteroid.size);
+    }
+}
+
+// Draw a unique asteroid shape
+function drawAsteroidShape(x, y, radius, size) {
+    // Create a few different asteroid shapes
+    const shapeType = Math.floor(Math.abs(Math.sin(x * y * 0.0001)) * 5) % 5;
+    
+    ctx.beginPath();
+    
+    switch (shapeType) {
+        case 0: // Irregular polygon with 7-10 points
+            drawIrregularPolygon(x, y, radius, 7 + Math.floor(Math.abs(Math.sin(x * 0.01)) * 4));
+            break;
+        case 1: // Rounded polygon with 5-8 points
+            drawRoundedPolygon(x, y, radius, 5 + Math.floor(Math.abs(Math.cos(y * 0.01)) * 4));
+            break;
+        case 2: // Combination shape (circle with protrusions)
+            drawCombinationShape(x, y, radius);
+            break;
+        case 3: // Jagged shape
+            drawJaggedShape(x, y, radius);
+            break;
+        case 4: // Organic shape
+            drawOrganicShape(x, y, radius);
+            break;
+    }
+    
+    ctx.stroke();
+}
+
+// Draw an irregular polygon with random variations
+function drawIrregularPolygon(x, y, radius, points) {
+    const angleStep = (Math.PI * 2) / points;
+    
+    for (let i = 0; i <= points; i++) {
+        const angle = i * angleStep;
+        // Add randomness to the radius
+        const variation = 0.7 + Math.abs(Math.sin(x * y * 0.001 + i)) * 0.6;
+        const r = radius * variation;
+        const px = x + Math.cos(angle) * r;
+        const py = y + Math.sin(angle) * r;
+        
+        if (i === 0) {
+            ctx.moveTo(px, py);
+        } else {
+            ctx.lineTo(px, py);
+        }
+    }
+}
+
+// Draw a rounded polygon
+function drawRoundedPolygon(x, y, radius, points) {
+    const angleStep = (Math.PI * 2) / points;
+    
+    for (let i = 0; i <= points; i++) {
+        const angle = i * angleStep;
+        // Add smooth variations to the radius
+        const variation = 0.8 + Math.sin(x * 0.01 + angle) * 0.2 + Math.cos(y * 0.01 + angle) * 0.2;
+        const r = radius * variation;
+        const px = x + Math.cos(angle) * r;
+        const py = y + Math.sin(angle) * r;
+        
+        if (i === 0) {
+            ctx.moveTo(px, py);
+        } else {
+            ctx.lineTo(px, py);
+        }
+    }
+}
+
+// Draw a combination shape (circle with protrusions)
+function drawCombinationShape(x, y, radius) {
+    const points = 8;
+    const angleStep = (Math.PI * 2) / points;
+    
+    for (let i = 0; i <= points; i++) {
+        const angle = i * angleStep;
+        // Alternate between normal radius and extended radius
+        const isProtrusion = i % 2 === 0;
+        const r = isProtrusion ? radius * 1.3 : radius * 0.8;
+        const px = x + Math.cos(angle) * r;
+        const py = y + Math.sin(angle) * r;
+        
+        if (i === 0) {
+            ctx.moveTo(px, py);
+        } else {
+            ctx.lineTo(px, py);
+        }
+    }
+}
+
+// Draw a jagged shape
+function drawJaggedShape(x, y, radius) {
+    const points = 12;
+    const angleStep = (Math.PI * 2) / points;
+    
+    for (let i = 0; i <= points; i++) {
+        const angle = i * angleStep;
+        // Create sharp variations
+        const variation = 0.6 + Math.abs(Math.sin(angle * 3)) * 0.8;
+        const r = radius * variation;
+        const px = x + Math.cos(angle) * r;
+        const py = y + Math.sin(angle) * r;
+        
+        if (i === 0) {
+            ctx.moveTo(px, py);
+        } else {
+            ctx.lineTo(px, py);
+        }
+    }
+}
+
+// Draw an organic shape
+function drawOrganicShape(x, y, radius) {
+    const points = 10;
+    const angleStep = (Math.PI * 2) / points;
+    
+    // First pass - create base shape
+    let pointsArray = [];
+    for (let i = 0; i < points; i++) {
+        const angle = i * angleStep;
+        // Smooth organic variations
+        const variation = 0.85 + Math.sin(x * 0.005 + angle) * 0.15 + Math.cos(y * 0.005 + angle) * 0.15;
+        const r = radius * variation;
+        const px = x + Math.cos(angle) * r;
+        const py = y + Math.sin(angle) * r;
+        pointsArray.push({x: px, y: py});
+    }
+    
+    // Draw the shape using quadratic curves for smoothness
+    if (pointsArray.length > 0) {
+        ctx.moveTo(pointsArray[0].x, pointsArray[0].y);
+        for (let i = 0; i < pointsArray.length; i++) {
+            const current = pointsArray[i];
+            const next = pointsArray[(i + 1) % pointsArray.length];
+            const controlX = (current.x + next.x) / 2;
+            const controlY = (current.y + next.y) / 2;
+            ctx.quadraticCurveTo(controlX, controlY, next.x, next.y);
+        }
     }
 }
 
@@ -1884,7 +2023,7 @@ function drawTurrets() {
 
 // Draw all army men
 function drawArmyMen() {
-    ctx.strokeStyle = 'red';
+    ctx.strokeStyle = 'green';
     ctx.lineWidth = 2;
     for (const armyMan of armyMen) {
         // Calculate screen position relative to ship
