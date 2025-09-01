@@ -808,12 +808,6 @@ function updateShip() {
         powerup.y -= ship.velocity.y;
     }
     
-    // Mines move with the world
-    for (const mine of mines) {
-        mine.x -= ship.velocity.x;
-        mine.y -= ship.velocity.y;
-    }
-    
     // Roses move with the world
     for (const rose of roses) {
         rose.x -= ship.velocity.x;
