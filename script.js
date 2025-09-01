@@ -24,6 +24,9 @@ let armyMen = []; // Array to hold army men
 let powerups = []; // Array to hold powerups
 let roses = []; // Array to hold roses
 let sword; // Object to hold the orbiting sword
+let speedBoostActive = false; // Track if speed boost is active
+let speedBoostTimer = 0; // Timer for speed boost duration
+let originalMaxSpeed = 0; // Store original max speed
 let score = 0;
 let lives = 3;
 let highScore = 0;
@@ -230,6 +233,11 @@ function resetGame() {
     
     // Reset sword (no sword at start)
     sword = null;
+    
+    // Reset speed boost
+    speedBoostActive = false;
+    speedBoostTimer = 0;
+    originalMaxSpeed = 0;
     
     // Reset game state
     asteroids = [];
@@ -522,8 +530,8 @@ function createPowerup(x = null, y = null) {
         y = Math.sin(angle) * distance;
     }
     
-    // 14% chance for ship size powerup, 20% for bullet size, 15% for force field, 51% for sword
-    // This increases sword powerups by 5% (from 46% to 51%)
+    // 14% chance for ship size powerup, 20% for bullet size, 15% for force field, 20% for sword, 31% for speed boost
+    // This adds a new speed boost power-up type
     const rand = Math.random();
     let powerupType;
     if (rand < 0.14) {
@@ -532,15 +540,17 @@ function createPowerup(x = null, y = null) {
         powerupType = 'bulletSize';
     } else if (rand < 0.49) {
         powerupType = 'forceField';
+    } else if (rand < 0.69) {
+        powerupType = 'sword'; // Sword power-up (20% chance)
     } else {
-        powerupType = 'sword'; // Sword power-up (51% chance, increased by 5%)
+        powerupType = 'speedBoost'; // Speed boost power-up (31% chance)
     }
     
     const powerup = {
         x: x,
         y: y,
         radius: 12,
-        type: powerupType, // Type of powerup ('bulletSize', 'forceField', 'shipSize', or 'sword')
+        type: powerupType, // Type of powerup ('bulletSize', 'forceField', 'shipSize', 'sword', or 'speedBoost')
         pulse: 0 // For animation
     };
     
@@ -1111,6 +1121,15 @@ function updateForceField() {
         forceFieldLifetime--;
         if (forceFieldLifetime <= 0) {
             forceFieldActive = false;
+        }
+    }
+    
+    // Update speed boost timer
+    if (speedBoostActive) {
+        speedBoostTimer--;
+        if (speedBoostTimer <= 0) {
+            speedBoostActive = false;
+            ship.maxSpeed = originalMaxSpeed; // Reset to original max speed
         }
     }
 }
@@ -1736,6 +1755,21 @@ function checkCollisions() {
                     // Increase score
                     score += 100; // Sword powerups are worth 100 points
                     if (scoreValue) scoreValue.textContent = score;
+                } else if (powerup.type === 'speedBoost') {
+                    // Apply speed boost effect
+                    if (!speedBoostActive) {
+                        speedBoostActive = true;
+                        originalMaxSpeed = ship.maxSpeed; // Store original max speed
+                        ship.maxSpeed = originalMaxSpeed * 1.15; // Increase speed by 15%
+                        speedBoostTimer = 600; // 10 seconds at 60fps
+                        
+                        // Add visual effect
+                        createExplosion(powerup.x, powerup.y, false);
+                        
+                        // Increase score
+                        score += 75; // Speed boost powerups are worth 75 points
+                        if (scoreValue) scoreValue.textContent = score;
+                    }
                 }
                 
                 // Remove the powerup
@@ -2335,6 +2369,21 @@ function drawPowerups() {
             ctx.moveTo(-(powerup.radius + pulseSize) * 0.7, (powerup.radius + pulseSize) * 0.7);
             ctx.lineTo((powerup.radius + pulseSize) * 0.7, -(powerup.radius + pulseSize) * 0.7);
             ctx.stroke();
+        } else if (powerup.type === 'speedBoost') {
+            // Draw speed boost powerup as a lightning bolt (yellow)
+            ctx.strokeStyle = 'yellow';
+            ctx.lineWidth = 2;
+            
+            // Draw lightning bolt shape
+            ctx.beginPath();
+            ctx.moveTo(0, -(powerup.radius + pulseSize)); // Top
+            ctx.lineTo(-(powerup.radius + pulseSize) * 0.5, 0); // Left middle
+            ctx.lineTo(0, (powerup.radius + pulseSize) * 0.3); // Center
+            ctx.lineTo(-(powerup.radius + pulseSize) * 0.3, (powerup.radius + pulseSize) * 0.5); // Lower left
+            ctx.lineTo((powerup.radius + pulseSize) * 0.5, 0); // Right middle
+            ctx.lineTo(0, -(powerup.radius + pulseSize) * 0.3); // Center
+            ctx.closePath();
+            ctx.stroke();
         }
         ctx.restore();
     }
@@ -2421,6 +2470,28 @@ function drawShipAtCenter() {
     ctx.lineTo(-ship.radius * shipSizeMultiplier, ship.radius * shipSizeMultiplier * 0.7); // Rear right
     ctx.closePath();
     ctx.stroke();
+    
+    // Draw speed boost indicator if active
+    if (speedBoostActive) {
+        // Draw a yellow glow around the ship
+        ctx.strokeStyle = 'rgba(255, 255, 0, 0.7)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(0, 0, ship.radius * shipSizeMultiplier * 1.5, 0, Math.PI * 2);
+        ctx.stroke();
+        
+        // Draw small speed lines trailing behind the ship
+        ctx.strokeStyle = 'yellow';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 3; i++) {
+            const angle = Math.PI + (Math.random() - 0.5) * 0.5; // Behind the ship with some variation
+            const length = 10 + Math.random() * 10;
+            ctx.beginPath();
+            ctx.moveTo(-ship.radius * shipSizeMultiplier, 0);
+            ctx.lineTo(-ship.radius * shipSizeMultiplier - Math.cos(angle) * length, -Math.sin(angle) * length);
+            ctx.stroke();
+        }
+    }
     
     ctx.restore();
 }
