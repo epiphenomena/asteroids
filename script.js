@@ -1144,11 +1144,14 @@ function updateTimedEffects() {
         }
     }
     
-    // Update ship shape timer
+    // Update ship shape timer (only when ship is visible and not invincible)
     if (shipShapeTimer > 0) {
-        shipShapeTimer--;
-        if (shipShapeTimer <= 0) {
-            shipShape = originalShipShape; // Reset to original ship shape
+        // Only decrement timer when ship is alive and visible
+        if (ship && ship.visible && !ship.invincible) {
+            shipShapeTimer--;
+            if (shipShapeTimer <= 0) {
+                shipShape = originalShipShape; // Reset to original ship shape
+            }
         }
     }
 }
