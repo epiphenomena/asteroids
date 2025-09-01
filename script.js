@@ -538,29 +538,31 @@ function createPowerup(x = null, y = null) {
         y = Math.sin(angle) * distance;
     }
     
-    // Equal 16.67% chance for each powerup type (6 total types)
+    // Equal 14.29% chance for each powerup type (7 total types)
     // This makes each power-up type equally likely to spawn
     const rand = Math.random();
     let powerupType;
-    if (rand < 0.1667) {
+    if (rand < 0.1429) {
         powerupType = 'shipSize';
-    } else if (rand < 0.3333) {
+    } else if (rand < 0.2857) {
         powerupType = 'bulletSize';
-    } else if (rand < 0.5) {
+    } else if (rand < 0.4286) {
         powerupType = 'forceField';
-    } else if (rand < 0.6667) {
-        powerupType = 'sword'; // Sword power-up (16.67% chance)
-    } else if (rand < 0.8333) {
-        powerupType = 'speedBoost'; // Speed boost power-up (16.67% chance)
+    } else if (rand < 0.5714) {
+        powerupType = 'sword'; // Sword power-up (14.29% chance)
+    } else if (rand < 0.7143) {
+        powerupType = 'speedBoost'; // Speed boost power-up (14.29% chance)
+    } else if (rand < 0.8571) {
+        powerupType = 'shipShape'; // Ship shape power-up (14.29% chance)
     } else {
-        powerupType = 'shipShape'; // Ship shape power-up (16.67% chance)
+        powerupType = 'shipDestroy'; // Ship destroy trap power-up (14.29% chance)
     }
     
     const powerup = {
         x: x,
         y: y,
         radius: 12,
-        type: powerupType, // Type of powerup ('bulletSize', 'forceField', 'shipSize', 'sword', 'speedBoost', or 'shipShape')
+        type: powerupType, // Type of powerup ('bulletSize', 'forceField', 'shipSize', 'sword', 'speedBoost', 'shipShape', or 'shipDestroy')
         pulse: 0 // For animation
     };
     
@@ -1812,6 +1814,34 @@ function checkCollisions() {
                     // Increase score
                     score += 80; // Ship shape powerups are worth 80 points
                     if (scoreValue) scoreValue.textContent = score;
+                } else if (powerup.type === 'shipDestroy') {
+                    // Destroy the ship immediately
+                    // Create a large explosion at the ship's position
+                    createExplosion(0, 0, true); // Large explosion
+                    
+                    // Lose a life
+                    lives--;
+                    if (livesValue) livesValue.textContent = lives;
+                    
+                    // Reset ship velocity to zero
+                    ship.velocity.x = 0;
+                    ship.velocity.y = 0;
+                    
+                    // Check for game over
+                    if (lives <= 0) {
+                        endGame();
+                    } else {
+                        // Make ship invisible for 2 seconds (120 frames at 60fps)
+                        ship.visible = false;
+                        ship.respawnTime = 120;
+                        
+                        // Make ship invincible for 3 seconds after respawn
+                        ship.invincible = true;
+                        ship.invincibilityTime = 180; // 3 seconds at 60fps
+                    }
+                    
+                    // Create visual effect at powerup location
+                    createExplosion(powerup.x, powerup.y, true); // Large explosion
                 }
                 
                 // Remove the powerup
@@ -2450,6 +2480,32 @@ function drawPowerups() {
             }
             ctx.closePath();
             ctx.stroke();
+        } else if (powerup.type === 'shipDestroy') {
+            // Draw ship destroy powerup as a skull and crossbones (black/white)
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            
+            // Draw skull (circle for head)
+            ctx.beginPath();
+ 
+           ctx.arc(0, -2, powerup.radius * 0.6, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // Draw crossbones (two crossed lines)
+            ctx.beginPath();
+            ctx.moveTo(-powerup.radius * 0.8, powerup.radius * 0.2);
+            ctx.lineTo(powerup.radius * 0.8, powerup.radius * 0.8);
+            ctx.moveTo(powerup.radius * 0.8, powerup.radius * 0.2);
+            ctx.lineTo(-powerup.radius * 0.8, powerup.radius * 0.8);
+            ctx.stroke();
+            
+            // Draw warning circle around the skull
+            ctx.strokeStyle = 'red';
+            ctx.setLineDash([3, 3]); // Dashed line for warning
+            ctx.beginPath();
+            ctx.arc(0, 0, powerup.radius + pulseSize, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]); // Reset line dash
         }
         ctx.restore();
     }
