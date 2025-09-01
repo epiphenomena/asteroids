@@ -522,18 +522,18 @@ function createPowerup(x = null, y = null) {
         y = Math.sin(angle) * distance;
     }
     
-    // 14% chance for ship size powerup, 20% for bullet size, 20% for force field, 46% for sword
-    // This increases sword powerups by 15% (from 40% to 46%)
+    // 14% chance for ship size powerup, 20% for bullet size, 15% for force field, 51% for sword
+    // This increases sword powerups by 5% (from 46% to 51%)
     const rand = Math.random();
     let powerupType;
     if (rand < 0.14) {
         powerupType = 'shipSize';
     } else if (rand < 0.34) {
         powerupType = 'bulletSize';
-    } else if (rand < 0.54) {
+    } else if (rand < 0.49) {
         powerupType = 'forceField';
     } else {
-        powerupType = 'sword'; // Sword power-up (46% chance, increased by 15%)
+        powerupType = 'sword'; // Sword power-up (51% chance, increased by 5%)
     }
     
     const powerup = {
