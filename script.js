@@ -1834,7 +1834,7 @@ function checkCollisions() {
                         x: 0, // Start at ship position
                         y: 0,
                         radius: 15,
-                        speed: 3,
+                        speed: 3.45, // 15% faster than original speed of 3
                         angle: 0,
                         target: null, // Current target to eat
                         eatTimer: 780 // 13 seconds at 60fps
