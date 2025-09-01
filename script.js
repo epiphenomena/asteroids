@@ -1118,12 +1118,14 @@ function updateForceField() {
 function updateSword() {
     // Only update if sword exists
     if (sword) {
-        // Update the sword's orbit angle
-        sword.angle += sword.orbitSpeed;
-        
-        // Keep angle within 0-2π range
-        if (sword.angle > Math.PI * 2) {
-            sword.angle -= Math.PI * 2;
+        // Update all swords' orbit angles
+        for (const s of sword.swords) {
+            s.angle += sword.orbitSpeed;
+            
+            // Keep angle within 0-2π range
+            if (s.angle > Math.PI * 2) {
+                s.angle -= Math.PI * 2;
+            }
         }
     }
 }
@@ -1349,10 +1351,15 @@ function checkCollisions() {
     
     // Check for sword collisions (only if sword exists and ship is visible)
     if (sword && ship && ship.visible) {
-        const swordPos = getSwordPosition();
-        if (swordPos) {
-            // Define sword hitbox size (larger than visual representation for better gameplay)
-            const swordHitboxRadius = sword.length * 0.8; // Use 80% of sword length as hitbox
+        // Define sword hitbox size (larger than visual representation for better gameplay)
+        const swordHitboxRadius = sword.length * 0.8; // Use 80% of sword length as hitbox
+        
+        // Check each sword for collisions
+        for (const s of sword.swords) {
+            const swordPos = {
+                x: Math.cos(s.angle) * sword.distance,
+                y: Math.sin(s.angle) * sword.distance
+            };
             
             // Check for sword-asteroid collisions
             for (let i = 0; i < asteroids.length; i++) {
@@ -1369,6 +1376,7 @@ function checkCollisions() {
                     
                     // Remove the asteroid
                     asteroids.splice(i, 1);
+                    i--; // Adjust index after removal
                     
                     // If asteroid is large (size 3), split it into medium ones (size 2)
                     // Medium asteroids (size 2) split into small ones (size 1)
@@ -1414,6 +1422,7 @@ function checkCollisions() {
                     
                     // Remove the mine that was hit
                     mines.splice(i, 1);
+                    i--; // Adjust index after removal
                     
                     // Check for objects within explosion radius
                     checkMineExplosion(mine.x, mine.y, explosionRadius);
@@ -1438,6 +1447,7 @@ function checkCollisions() {
                     
                     // Remove the turret that was hit
                     turrets.splice(i, 1);
+                    i--; // Adjust index after removal
                     
                     // Break after processing one collision
                     break;
@@ -1459,6 +1469,7 @@ function checkCollisions() {
                     
                     // Remove army man
                     armyMen.splice(i, 1);
+                    i--; // Adjust index after removal
                     
                     // Break after processing one collision
                     break;
@@ -1708,14 +1719,14 @@ function checkCollisions() {
                             orbitSpeed: 0.05, // Speed of orbit
                             length: 20, // Length of the sword
                             width: 3, // Width of the sword
-                            count: 1 // Number of swords collected
+                            count: 1, // Number of swords
+                            swords: [{ angle: 0 }] // Array to hold multiple swords
                         };
                     } else {
-                        // Stack swords - increase orbit speed and visual size
+                        // Add another sword on a random side
                         sword.count++;
-                        sword.orbitSpeed = 0.05 * sword.count; // Increase orbit speed with each collection
-                        sword.length = 20 + (sword.count - 1) * 5; // Increase length
-                        sword.width = 3 + (sword.count - 1) * 1; // Increase width
+                        const newAngle = Math.random() * Math.PI * 2; // Random angle
+                        sword.swords.push({ angle: newAngle });
                         
                         // Add visual effect for stacking
                         createExplosion(powerup.x, powerup.y, false);
@@ -1872,11 +1883,16 @@ function getSwordPosition() {
     // Only calculate if sword exists
     if (!sword) return null;
     
-    // Calculate sword position based on orbit around the ship (which is at 0,0 in world coordinates)
-    const swordX = Math.cos(sword.angle) * sword.distance;
-    const swordY = Math.sin(sword.angle) * sword.distance;
+    // For collision detection, we'll use the first sword's position
+    // In a more advanced implementation, we might check all swords
+    if (sword.swords.length > 0) {
+        const firstSword = sword.swords[0];
+        const swordX = Math.cos(firstSword.angle) * sword.distance;
+        const swordY = Math.sin(firstSword.angle) * sword.distance;
+        return { x: swordX, y: swordY };
+    }
     
-    return { x: swordX, y: swordY };
+    return null;
 }
 
 // Split an asteroid into smaller ones or remove it
@@ -2458,37 +2474,40 @@ function drawSword() {
     // Only draw if sword exists and ship is visible (not dead)
     if (!sword || (ship && !ship.visible)) return;
     
-    // Calculate sword position based on orbit around the ship
-    // The ship is always at the center of the screen (canvas.width/2, canvas.height/2)
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    
-    // Calculate sword position based on orbit angle and distance
-    const swordX = centerX + Math.cos(sword.angle) * sword.distance;
-    const swordY = centerY + Math.sin(sword.angle) * sword.distance;
-    
-    // Draw the sword as a rectangle (blade) with a triangular hilt
-    ctx.save();
-    
-    // Rotate the sword to face outward from the ship
-    ctx.translate(swordX, swordY);
-    ctx.rotate(sword.angle);
-    
-    // Draw sword blade (rectangle)
-    ctx.fillStyle = 'silver';
-    ctx.fillRect(-sword.length / 2, -sword.width / 2, sword.length, sword.width);
-    
-    // Draw sword hilt (rectangle)
-    ctx.fillStyle = 'goldenrod';
-    ctx.fillRect(-sword.length / 2 - 5, -sword.width, 5, sword.width * 2);
-    
-    // Draw sword pommel (circle)
-    ctx.fillStyle = 'gold';
-    ctx.beginPath();
-    ctx.arc(-sword.length / 2 - 5, 0, sword.width, 0, Math.PI * 2);
-    ctx.fill();
-    
-    ctx.restore();
+    // Draw each sword
+    for (const s of sword.swords) {
+        // Calculate sword position based on orbit around the ship
+        // The ship is always at the center of the screen (canvas.width/2, canvas.height/2)
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        
+        // Calculate sword position based on orbit angle and distance
+        const swordX = centerX + Math.cos(s.angle) * sword.distance;
+        const swordY = centerY + Math.sin(s.angle) * sword.distance;
+        
+        // Draw the sword as a rectangle (blade) with a triangular hilt
+        ctx.save();
+        
+        // Rotate the sword to face outward from the ship
+        ctx.translate(swordX, swordY);
+        ctx.rotate(s.angle);
+        
+        // Draw sword blade (rectangle)
+        ctx.fillStyle = 'silver';
+        ctx.fillRect(-sword.length / 2, -sword.width / 2, sword.length, sword.width);
+        
+        // Draw sword hilt (rectangle)
+        ctx.fillStyle = 'goldenrod';
+        ctx.fillRect(-sword.length / 2 - 5, -sword.width, 5, sword.width * 2);
+        
+        // Draw sword pommel (circle)
+        ctx.fillStyle = 'gold';
+        ctx.beginPath();
+        ctx.arc(-sword.length / 2 - 5, 0, sword.width, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
+    }
 }
 
 // Draw a radar indicator for an off-screen object
