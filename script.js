@@ -327,7 +327,8 @@ function createAsteroid(size = 3, x = null, y = null, forceMine = false) {
             y: y,
             radius: radius,
             velocity: { x: velocityX, y: velocityY },
-            size: size
+            size: size,
+            shapeType: Math.floor(Math.random() * 5) // Assign a random shape type (0-4)
         });
     }
 }
@@ -1822,16 +1823,13 @@ function drawAsteroids() {
         const screenX = asteroid.x - ship.x + canvas.width / 2;
         const screenY = asteroid.y - ship.y + canvas.height / 2;
         
-        // Generate a unique shape for each asteroid based on its size and position
-        drawAsteroidShape(screenX, screenY, asteroid.radius, asteroid.size);
+        // Use the predetermined shape type for consistency
+        drawAsteroidShape(screenX, screenY, asteroid.radius, asteroid.shapeType);
     }
 }
 
 // Draw a unique asteroid shape
-function drawAsteroidShape(x, y, radius, size) {
-    // Create a few different asteroid shapes
-    const shapeType = Math.floor(Math.abs(Math.sin(x * y * 0.0001)) * 5) % 5;
-    
+function drawAsteroidShape(x, y, radius, shapeType) {
     ctx.beginPath();
     
     switch (shapeType) {
