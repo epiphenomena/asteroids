@@ -2370,8 +2370,8 @@ function drawPowerups() {
             ctx.lineTo((powerup.radius + pulseSize) * 0.7, -(powerup.radius + pulseSize) * 0.7);
             ctx.stroke();
         } else if (powerup.type === 'speedBoost') {
-            // Draw speed boost powerup as a lightning bolt (yellow)
-            ctx.strokeStyle = 'yellow';
+            // Draw speed boost powerup as a lightning bolt (red)
+            ctx.strokeStyle = 'red';
             ctx.lineWidth = 2;
             
             // Draw lightning bolt shape
@@ -2473,15 +2473,15 @@ function drawShipAtCenter() {
     
     // Draw speed boost indicator if active
     if (speedBoostActive) {
-        // Draw a yellow glow around the ship
-        ctx.strokeStyle = 'rgba(255, 255, 0, 0.7)';
+        // Draw a red glow around the ship
+        ctx.strokeStyle = 'rgba(255, 0, 0, 0.7)';
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.arc(0, 0, ship.radius * shipSizeMultiplier * 1.5, 0, Math.PI * 2);
         ctx.stroke();
         
         // Draw small speed lines trailing behind the ship
-        ctx.strokeStyle = 'yellow';
+        ctx.strokeStyle = 'red';
         ctx.lineWidth = 2;
         for (let i = 0; i < 3; i++) {
             const angle = Math.PI + (Math.random() - 0.5) * 0.5; // Behind the ship with some variation
