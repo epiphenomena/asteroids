@@ -1829,7 +1829,7 @@ function checkCollisions() {
                     // Create visual effect at powerup location
                     createExplosion(powerup.x, powerup.y, true); // Large explosion
                 } else if (powerup.type === 'eatEverything') {
-                    // Spawn a mouse that eats everything for 7 seconds
+                    // Spawn a mouse that eats everything for 13 seconds
                     eatingMouse = {
                         x: 0, // Start at ship position
                         y: 0,
@@ -1837,7 +1837,7 @@ function checkCollisions() {
                         speed: 3,
                         angle: 0,
                         target: null, // Current target to eat
-                        eatTimer: 420 // 7 seconds at 60fps
+                        eatTimer: 780 // 13 seconds at 60fps
                     };
                     
                     // Add visual effect
