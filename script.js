@@ -27,6 +27,7 @@ let sword; // Object to hold the orbiting sword
 let speedBoostActive = false; // Track if speed boost is active
 let speedBoostTimer = 0; // Timer for speed boost duration
 let originalMaxSpeed = 0; // Store original max speed
+let shipShape = 'triangle'; // Current ship shape ('triangle', 'diamond', 'pentagon', 'hexagon', 'square')
 let score = 0;
 let lives = 3;
 let highScore = 0;
@@ -238,6 +239,9 @@ function resetGame() {
     speedBoostActive = false;
     speedBoostTimer = 0;
     originalMaxSpeed = 0;
+    
+    // Reset ship shape to default
+    shipShape = 'triangle';
     
     // Reset game state
     asteroids = [];
@@ -530,27 +534,29 @@ function createPowerup(x = null, y = null) {
         y = Math.sin(angle) * distance;
     }
     
-    // 14% chance for ship size powerup, 20% for bullet size, 15% for force field, 20% for sword, 31% for speed boost
-    // This adds a new speed boost power-up type
+    // 10% chance for ship size powerup, 20% for bullet size, 15% for force field, 20% for sword, 25% for speed boost, 10% for ship shape
+    // This adds a new ship shape power-up type
     const rand = Math.random();
     let powerupType;
-    if (rand < 0.14) {
+    if (rand < 0.10) {
         powerupType = 'shipSize';
-    } else if (rand < 0.34) {
+    } else if (rand < 0.30) {
         powerupType = 'bulletSize';
-    } else if (rand < 0.49) {
+    } else if (rand < 0.45) {
         powerupType = 'forceField';
-    } else if (rand < 0.69) {
+    } else if (rand < 0.65) {
         powerupType = 'sword'; // Sword power-up (20% chance)
+    } else if (rand < 0.90) {
+        powerupType = 'speedBoost'; // Speed boost power-up (25% chance)
     } else {
-        powerupType = 'speedBoost'; // Speed boost power-up (31% chance)
+        powerupType = 'shipShape'; // Ship shape power-up (10% chance)
     }
     
     const powerup = {
         x: x,
         y: y,
         radius: 12,
-        type: powerupType, // Type of powerup ('bulletSize', 'forceField', 'shipSize', 'sword', or 'speedBoost')
+        type: powerupType, // Type of powerup ('bulletSize', 'forceField', 'shipSize', 'sword', 'speedBoost', or 'shipShape')
         pulse: 0 // For animation
     };
     
@@ -1770,6 +1776,18 @@ function checkCollisions() {
                         score += 75; // Speed boost powerups are worth 75 points
                         if (scoreValue) scoreValue.textContent = score;
                     }
+                } else if (powerup.type === 'shipShape') {
+                    // Change ship to a random shape
+                    const shapes = ['triangle', 'diamond', 'pentagon', 'hexagon', 'square'];
+                    const randomIndex = Math.floor(Math.random() * shapes.length);
+                    shipShape = shapes[randomIndex];
+                    
+                    // Add visual effect
+                    createExplosion(powerup.x, powerup.y, false);
+                    
+                    // Increase score
+                    score += 80; // Ship shape powerups are worth 80 points
+                    if (scoreValue) scoreValue.textContent = score;
                 }
                 
                 // Remove the powerup
@@ -2384,6 +2402,30 @@ function drawPowerups() {
             ctx.lineTo(0, -(powerup.radius + pulseSize) * 0.3); // Center
             ctx.closePath();
             ctx.stroke();
+        } else if (powerup.type === 'shipShape') {
+            // Draw ship shape powerup as a multi-pointed star (purple)
+            ctx.strokeStyle = 'purple';
+            ctx.lineWidth = 2;
+            
+            // Draw an 8-pointed star
+            const outerRadius = powerup.radius + pulseSize;
+            const innerRadius = (powerup.radius + pulseSize) * 0.5;
+            
+            ctx.beginPath();
+            for (let i = 0; i < 8; i++) {
+                const angle = (i * Math.PI / 4) - Math.PI / 2;
+                const radius = i % 2 === 0 ? outerRadius : innerRadius;
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.closePath();
+            ctx.stroke();
         }
         ctx.restore();
     }
@@ -2454,7 +2496,7 @@ function drawShipAtCenter() {
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.rotate(ship.angle);
     
-    // Draw ship as a triangle with size based on multiplier
+    // Draw ship based on current shape with size based on multiplier
     let strokeStyle = 'white';
     
     // If ship is invincible, make it blink
@@ -2465,9 +2507,64 @@ function drawShipAtCenter() {
     ctx.strokeStyle = strokeStyle;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(ship.radius * shipSizeMultiplier, 0); // Nose of the ship
-    ctx.lineTo(-ship.radius * shipSizeMultiplier, -ship.radius * shipSizeMultiplier * 0.7); // Rear left
-    ctx.lineTo(-ship.radius * shipSizeMultiplier, ship.radius * shipSizeMultiplier * 0.7); // Rear right
+    
+    const size = ship.radius * shipSizeMultiplier;
+    
+    switch (shipShape) {
+        case 'triangle':
+            // Default triangle shape
+            ctx.moveTo(size, 0); // Nose of the ship
+            ctx.lineTo(-size, -size * 0.7); // Rear left
+            ctx.lineTo(-size, size * 0.7); // Rear right
+            break;
+            
+        case 'diamond':
+            // Diamond shape
+            ctx.moveTo(0, -size); // Top
+            ctx.lineTo(size, 0); // Right
+            ctx.lineTo(0, size); // Bottom
+            ctx.lineTo(-size, 0); // Left
+            break;
+            
+        case 'pentagon':
+            // Pentagon shape
+            for (let i = 0; i < 5; i++) {
+                const angle = (i * Math.PI * 2 / 5) - Math.PI / 2;
+                const x = Math.cos(angle) * size;
+                const y = Math.sin(angle) * size;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            break;
+            
+        case 'hexagon':
+            // Hexagon shape
+            for (let i = 0; i < 6; i++) {
+                const angle = (i * Math.PI * 2 / 6) - Math.PI / 2;
+                const x = Math.cos(angle) * size;
+                const y = Math.sin(angle) * size;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            break;
+            
+        case 'square':
+            // Square shape
+            ctx.moveTo(-size, -size); // Top left
+            ctx.lineTo(size, -size); // Top right
+            ctx.lineTo(size, size); // Bottom right
+            ctx.lineTo(-size, size); // Bottom left
+            break;
+    }
+    
     ctx.closePath();
     ctx.stroke();
     
