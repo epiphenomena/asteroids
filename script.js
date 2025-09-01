@@ -538,22 +538,22 @@ function createPowerup(x = null, y = null) {
         y = Math.sin(angle) * distance;
     }
     
-    // 50% chance for ship shape powerup, 10% for ship size, 15% for bullet size, 10% for force field, 10% for sword, 5% for speed boost
-    // This makes ship shape power-ups much more common
+    // Equal 16.67% chance for each powerup type (6 total types)
+    // This makes each power-up type equally likely to spawn
     const rand = Math.random();
     let powerupType;
-    if (rand < 0.50) {
-        powerupType = 'shipShape'; // Ship shape power-up (50% chance)
-    } else if (rand < 0.60) {
+    if (rand < 0.1667) {
         powerupType = 'shipSize';
-    } else if (rand < 0.75) {
+    } else if (rand < 0.3333) {
         powerupType = 'bulletSize';
-    } else if (rand < 0.85) {
+    } else if (rand < 0.5) {
         powerupType = 'forceField';
-    } else if (rand < 0.95) {
-        powerupType = 'sword'; // Sword power-up (10% chance)
+    } else if (rand < 0.6667) {
+        powerupType = 'sword'; // Sword power-up (16.67% chance)
+    } else if (rand < 0.8333) {
+        powerupType = 'speedBoost'; // Speed boost power-up (16.67% chance)
     } else {
-        powerupType = 'speedBoost'; // Speed boost power-up (5% chance)
+        powerupType = 'shipShape'; // Ship shape power-up (16.67% chance)
     }
     
     const powerup = {
