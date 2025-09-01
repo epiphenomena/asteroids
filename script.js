@@ -593,6 +593,41 @@ function createFoot(x = null, y = null) {
         y = Math.sin(angle) * distance;
     }
     
+    // Check if there's already a foot at this position (or very close)
+    let isPositionOccupied = false;
+    for (const foot of feet) {
+        const dx = foot.x - x;
+        const dy = foot.y - y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < 40) { // If another foot is within 40 pixels, consider position occupied
+            isPositionOccupied = true;
+            break;
+        }
+    }
+    
+    // If position is occupied, try to find a new position (up to 10 attempts)
+    if (isPositionOccupied) {
+        let attempts = 0;
+        while (isPositionOccupied && attempts < 10) {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 200 + Math.random() * 300; // 200-500 pixels from center
+            x = Math.cos(angle) * distance;
+            y = Math.sin(angle) * distance;
+            
+            isPositionOccupied = false;
+            for (const foot of feet) {
+                const dx = foot.x - x;
+                const dy = foot.y - y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < 40) {
+                    isPositionOccupied = true;
+                    break;
+                }
+            }
+            attempts++;
+        }
+    }
+    
     const foot = {
         x: x,
         y: y,
