@@ -191,8 +191,8 @@ function resetGame() {
         angle: 0, // In radians
         velocity: { x: 0, y: 0 },
         rotationSpeed: 0.05,
-        acceleration: 0.75, // 15% faster acceleration (0.65 * 1.15 ≈ 0.75)
-        maxSpeed: 5.75, // 15% faster max speed (5 * 1.15 = 5.75)
+        acceleration: 0.65, // Decreased from 0.75 to 0.65 (15% slower)
+        maxSpeed: 5.0, // Decreased from 5.75 to 5.0 (15% slower)
         friction: 0.98,
         shootCooldown: 0,
         maxShootCooldown: 20, // 20% slower firing rate (17 / 0.8 ≈ 20)
@@ -243,7 +243,7 @@ function createAsteroids(count) {
     }
 }
 
-// Create a single asteroid
+// Create a single asteroid or mine
 function createAsteroid(size = 3, x = null, y = null, forceMine = false) {
     // Randomly decide if this should be a mine (30% chance) unless forced
     const isMine = forceMine || Math.random() < 0.3;
@@ -283,7 +283,7 @@ function createAsteroid(size = 3, x = null, y = null, forceMine = false) {
     const radius = size * 10;
     
     if (isMine) {
-        // Create a mine
+        // Create a mine with absolute world coordinates (not affected by ship movement)
         mines.push({
             x: x,
             y: y,
@@ -291,7 +291,9 @@ function createAsteroid(size = 3, x = null, y = null, forceMine = false) {
             velocity: { x: velocityX, y: velocityY },
             size: size,
             type: 'mine', // Distinguish mines from asteroids
-            explosionTimer: 0 // Initialize explosion timer
+            explosionTimer: 0, // Initialize explosion timer
+            worldX: x, // Store absolute world coordinates
+            worldY: y  // Store absolute world coordinates
         });
     } else {
         // Create a regular asteroid
@@ -839,60 +841,34 @@ function updateMines() {
     for (let i = mines.length - 1; i >= 0; i--) {
         const mine = mines[i];
         
-        // Update position
-        mine.x += mine.velocity.x;
-        mine.y += mine.velocity.y;
+        // Update position using absolute world coordinates
+        // Mines move independently of ship movement
+        mine.worldX += mine.velocity.x;
+        mine.worldY += mine.velocity.y;
         
-        // Screen wrapping
+        // Update relative position for rendering and collision detection
+        mine.x = mine.worldX - ship.x;
+        mine.y = mine.worldY - ship.y;
+        
+        // Screen wrapping using absolute coordinates
         const buffer = 100; // Distance from screen edge
         const leftEdge = - canvas.width / 2 - buffer;
         const rightEdge = canvas.width / 2 + buffer;
         const topEdge = - canvas.height / 2 - buffer;
         const bottomEdge = canvas.height / 2 + buffer;
         
-        if (mine.x < leftEdge) mine.x = rightEdge;
-        if (mine.x > rightEdge) mine.x = leftEdge;
-        if (mine.y < topEdge) mine.y = bottomEdge;
-        if (mine.y > bottomEdge) mine.y = topEdge;
+        // Convert relative position to absolute for wrapping
+        const absoluteX = mine.worldX;
+        const absoluteY = mine.worldY;
         
-        // Update mine timer for periodic explosions
-        if (!mine.explosionTimer) {
-            mine.explosionTimer = 0;
-        }
+        if (absoluteX < leftEdge) mine.worldX = rightEdge;
+        if (absoluteX > rightEdge) mine.worldX = leftEdge;
+        if (absoluteY < topEdge) mine.worldY = bottomEdge;
+        if (absoluteY > bottomEdge) mine.worldY = topEdge;
         
-        mine.explosionTimer++;
-        
-        // Check for asteroids in explosion radius every 300 frames (5 seconds at 60fps)
-        if (mine.explosionTimer >= 300) {
-            mine.explosionTimer = 0;
-            
-            // Check for asteroids within explosion radius
-            const explosionRadius = 100; // Approximately 1 inch at typical screen resolution
-            let asteroidsInRadius = false;
-            
-            for (const asteroid of asteroids) {
-                if (distance(mine.x, mine.y, asteroid.x, asteroid.y) < explosionRadius) {
-                    asteroidsInRadius = true;
-                    break;
-                }
-            }
-            
-            // If asteroids are found in radius, explode the mine
-            if (asteroidsInRadius) {
-                // Create mine explosion that affects nearby objects
-                createExplosion(mine.x, mine.y, true);
-                
-                // Remove the mine that exploded
-                mines.splice(i, 1);
-                
-                // Check for objects within explosion radius
-                checkMineExplosion(mine.x, mine.y, explosionRadius);
-                
-                // Increase score for the mine explosion
-                score += 15 * mine.size; // Mines are worth more points
-                if (scoreValue) scoreValue.textContent = score;
-            }
-        }
+        // Update relative position after wrapping
+        mine.x = mine.worldX - ship.x;
+        mine.y = mine.worldY - ship.y;
     }
 }
 
