@@ -24,6 +24,7 @@ let armyMen = []; // Array to hold army men
 let powerups = []; // Array to hold powerups
 let roses = []; // Array to hold roses
 let feet = []; // Array to hold feet that stamp in one place
+let karateMen = []; // Array to hold karate men
 let sword; // Object to hold the orbiting sword
 let speedBoostActive = false; // Track if speed boost is active
 let speedBoostTimer = 0; // Timer for speed boost duration
@@ -273,6 +274,7 @@ function resetGame() {
     mines = [];
     turrets = []; // Reset turrets
     armyMen = []; // Reset army men
+    karateMen = []; // Reset karate men
     powerups = []; // Reset powerups
     roses = []; // Reset roses
     feet = []; // Reset feet
@@ -647,15 +649,195 @@ function createFoot(x = null, y = null) {
         stampCooldown: 0,
         maxStampCooldown: 180, // 3 seconds at 60fps
         stampEffect: 0 // For animation
-    };
+    }
     
     feet.push(foot);
+}
+
+// Create a karate man that spins and destroys enemies
+function createKarateMan(x = null, y = null) {
+    // If position not specified, create at random edge relative to ship position
+    if (x === null || y === null) {
+        const side = Math.floor(Math.random() * 4);
+        const buffer = 200; // Distance from screen edge
+        
+        switch (side) {
+            case 0: // Top
+                x = (Math.random() * canvas.width - canvas.width / 2);
+                y = - canvas.height / 2 - buffer;
+                break;
+            case 1: // Right
+                x = canvas.width / 2 + buffer;
+                y = (Math.random() * canvas.height - canvas.height / 2);
+                break;
+            case 2: // Bottom
+                x = (Math.random() * canvas.width - canvas.width / 2);
+                y = canvas.height / 2 + buffer;
+                break;
+            case 3: // Left
+                x = - canvas.width / 2 - buffer;
+                y = (Math.random() * canvas.height - canvas.height / 2);
+                break;
+        }
+    }
+    
+    // Random velocity for initial movement
+    const speed = Math.random() * 1 + 0.5;
+    const angle = Math.random() * Math.PI * 2;
+    const velocityX = Math.cos(angle) * speed;
+    const velocityY = Math.sin(angle) * speed;
+    
+    const karateMan = {
+        x: x,
+        y: y,
+        radius: 25, // Larger hitbox
+        velocity: { x: velocityX, y: velocityY },
+        speed: 1.5,
+        maxSpeed: 2.5,
+        acceleration: 0.05,
+        spinAngle: 0, // Current spin angle for rotation animation
+        kickAngle: 0, // Current kick angle for kick animation
+        kickCooldown: 0,
+        maxKickCooldown: 90, // More frequent "attacks"
+        kickEffect: 0 // For kick animation
+    };
+    
+    karateMen.push(karateMan);
 }
 
 // Create a group of army men
 function createArmyMenGroup(count) {
     for (let i = 0; i < count; i++) {
         createArmyMan();
+    }
+}
+
+// Check for collisions between karate men and other enemies
+function checkKarateManCollisions(karateMan) {
+    // Check for collisions with asteroids
+    for (let i = asteroids.length - 1; i >= 0; i--) {
+        const asteroid = asteroids[i];
+        if (distance(karateMan.x, karateMan.y, asteroid.x, asteroid.y) < karateMan.radius + asteroid.radius) {
+            // Create explosion particles
+            createExplosion(asteroid.x, asteroid.y, false);
+            
+            // Increase score
+            score += 10 * asteroid.size;
+            if (scoreValue) scoreValue.textContent = score;
+            
+            // Remove asteroid
+            asteroids.splice(i, 1);
+            
+            // If asteroid is large enough, split it
+            if (asteroid.size > 1) {
+                for (let k = 0; k < 2; k++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Math.random() * 2 + 1;
+                    const velocityX = Math.cos(angle) * speed;
+                    const velocityY = Math.sin(angle) * speed;
+                    
+                    asteroids.push({
+                        x: asteroid.x,
+                        y: asteroid.y,
+                        radius: (asteroid.size - 1) * 10,
+                        velocity: { x: velocityX, y: velocityY },
+                        size: asteroid.size - 1,
+                        shapeType: Math.floor(Math.random() * 5)
+                    });
+                }
+            }
+        }
+    }
+    
+    // Check for collisions with mines
+    for (let i = mines.length - 1; i >= 0; i--) {
+        const mine = mines[i];
+        if (distance(karateMan.x, karateMan.y, mine.x, mine.y) < karateMan.radius + mine.radius) {
+            // Create mine explosion that affects nearby objects
+            const explosionRadius = 100;
+            createExplosion(mine.x, mine.y, true);
+            
+            // Increase score
+            score += 15 * mine.size;
+            if (scoreValue) scoreValue.textContent = score;
+            
+            // Remove mine
+            mines.splice(i, 1);
+            
+            // Check for objects within explosion radius
+            checkMineExplosion(mine.x, mine.y, explosionRadius);
+        }
+    }
+    
+    // Check for collisions with army men
+    for (let i = armyMen.length - 1; i >= 0; i--) {
+        const armyMan = armyMen[i];
+        if (distance(karateMan.x, karateMan.y, armyMan.x, armyMan.y) < karateMan.radius + armyMan.radius) {
+            // Create explosion particles
+            createExplosion(armyMan.x, armyMan.y, false);
+            
+            // Increase score
+            score += 25;
+            if (scoreValue) scoreValue.textContent = score;
+            
+            // Remove army man
+            armyMen.splice(i, 1);
+        }
+    }
+    
+    // Check for collisions with turrets
+    for (let i = turrets.length - 1; i >= 0; i--) {
+        const turret = turrets[i];
+        if (distance(karateMan.x, karateMan.y, turret.x, turret.y) < karateMan.radius + turret.radius) {
+            // Create explosion particles
+            createExplosion(turret.x, turret.y, false);
+            
+            // Increase score
+            score += 50;
+            if (scoreValue) scoreValue.textContent = score;
+            
+            // Remove turret
+            turrets.splice(i, 1);
+        }
+    }
+    
+    // Check for collisions with roses
+    for (let i = roses.length - 1; i >= 0; i--) {
+        const rose = roses[i];
+        if (distance(karateMan.x, karateMan.y, rose.x, rose.y) < karateMan.radius + rose.radius) {
+            // Create explosion particles
+            createExplosion(rose.x, rose.y, false);
+            
+            // Increase score
+            score += 75;
+            if (scoreValue) scoreValue.textContent = score;
+            
+            // Remove rose
+            roses.splice(i, 1);
+        }
+    }
+    
+    // Check for collisions with feet
+    for (let i = feet.length - 1; i >= 0; i--) {
+        const foot = feet[i];
+        if (distance(karateMan.x, karateMan.y, foot.x, foot.y) < karateMan.radius + foot.radius) {
+            // Create explosion particles
+            createExplosion(foot.x, foot.y, false);
+            
+            // Increase score
+            score += 30;
+            if (scoreValue) scoreValue.textContent = score;
+            
+            // Remove foot
+            feet.splice(i, 1);
+        }
+    }
+}
+
+// Create a group of karate men
+function createKarateMenGroup(count) {
+    for (let i = 0; i < count; i++) {
+        createKarateMan();
     }
 }
 
@@ -729,6 +911,9 @@ function update() {
     
     // Update army men
     updateArmyMen();
+    
+    // Update karate men
+    updateKarateMen();
     
     // Update powerups
     updatePowerups();
@@ -949,6 +1134,12 @@ function updateShip() {
             bullet.y -= ship.velocity.y;
         }
     }
+    
+    // Karate men move with the world
+    for (const karateMan of karateMen) {
+        karateMan.x -= ship.velocity.x;
+        karateMan.y -= ship.velocity.y;
+    }
 }
 
 // Update bullet positions and remove off-screen bullets
@@ -1099,6 +1290,62 @@ function updateArmyMen() {
         if (armyMan.x > rightEdge) armyMan.x = leftEdge;
         if (armyMan.y < topEdge) armyMan.y = bottomEdge;
         if (armyMan.y > bottomEdge) armyMan.y = topEdge;
+    }
+}
+
+// Update karate men positions to move randomly and destroy enemies
+function updateKarateMen() {
+    for (let i = karateMen.length - 1; i >= 0; i--) {
+        const karateMan = karateMen[i];
+        
+        // Apply random movement (brownian motion)
+        karateMan.velocity.x += (Math.random() - 0.5) * 0.1;
+        karateMan.velocity.y += (Math.random() - 0.5) * 0.1;
+        
+        // Limit maximum speed
+        const speed = Math.sqrt(karateMan.velocity.x * karateMan.velocity.x + karateMan.velocity.y * karateMan.velocity.y);
+        if (speed > karateMan.maxSpeed) {
+            karateMan.velocity.x = (karateMan.velocity.x / speed) * karateMan.maxSpeed;
+            karateMan.velocity.y = (karateMan.velocity.y / speed) * karateMan.maxSpeed;
+        }
+        
+        // Update position
+        karateMan.x += karateMan.velocity.x;
+        karateMan.y += karateMan.velocity.y;
+        
+        // Update spin animation (faster spinning)
+        karateMan.spinAngle += 0.3; // Faster spinning
+        
+        // Update kick animation
+        if (karateMan.kickEffect > 0) {
+            karateMan.kickEffect--;
+        }
+        
+        // Update kick cooldown
+        if (karateMan.kickCooldown > 0) {
+            karateMan.kickCooldown--;
+        }
+        
+        // Perform "attack" periodically
+        if (karateMan.kickCooldown <= 0) {
+            karateMan.kickEffect = 20; // Show attack effect
+            karateMan.kickCooldown = karateMan.maxKickCooldown;
+            
+            // Check for collisions with other enemies and destroy them
+            checkKarateManCollisions(karateMan);
+        }
+        
+        // Screen wrapping
+        const buffer = 100; // Distance from screen edge
+        const leftEdge = - canvas.width / 2 - buffer;
+        const rightEdge = canvas.width / 2 + buffer;
+        const topEdge = - canvas.height / 2 - buffer;
+        const bottomEdge = canvas.height / 2 + buffer;
+        
+        if (karateMan.x < leftEdge) karateMan.x = rightEdge;
+        if (karateMan.x > rightEdge) karateMan.x = leftEdge;
+        if (karateMan.y < topEdge) karateMan.y = bottomEdge;
+        if (karateMan.y > bottomEdge) karateMan.y = topEdge;
     }
 }
 
@@ -1347,9 +1594,18 @@ function spawnWaveEnemies() {
     // Create army men groups (3 army men every wave)
     createArmyMenGroup(3); // 3 army men every wave
     
-    // Create turrets (add new ones every 3 waves)
-    if (waveNumber > 1 && waveNumber % 3 === 1) { // Start at wave 4, then every 3 waves
-        createTurret(); // Add one new turret
+    // Create karate men groups (1 karate man every wave starting from wave 2)
+    if (waveNumber > 1) {
+        createKarateMenGroup(1); // 1 karate man every wave starting from wave 2
+    }
+    
+    // Create turrets (add new ones every 2 waves, increasing frequency)
+    if (waveNumber > 1) {
+        // Create more turrets as waves progress
+        const turretCount = Math.min(1 + Math.floor(waveNumber / 3), 4); // Start with 1, max 4
+        for (let i = 0; i < turretCount; i++) {
+            createTurret(); // Add turrets
+        }
     }
     
     // Create powerups (more frequent as game progresses)
@@ -1545,6 +1801,30 @@ function checkCollisions() {
                 return;
             }
         }
+        
+        // Check bullet-karate man collisions
+        for (let j = 0; j < karateMen.length; j++) {
+            const karateMan = karateMen[j];
+            
+            // Check collision
+            if (distance(bullet.x, bullet.y, karateMan.x, karateMan.y) < bullet.radius + karateMan.radius) {
+                // Create explosion particles
+                createExplosion(karateMan.x, karateMan.y, false);
+                
+                // Increase score (only if it's a player bullet)
+                if (!bullet.isTurretBullet) {
+                    score += 35; // Karate men are worth 35 points
+                    if (scoreValue) scoreValue.textContent = score;
+                }
+                
+                // Remove bullet and karate man
+                bullets.splice(i, 1);
+                karateMen.splice(j, 1);
+                
+                // Process only one collision per frame
+                return;
+            }
+        }
     }
     
     // Check for sword collisions (only if sword exists and ship is visible)
@@ -1689,6 +1969,28 @@ function checkCollisions() {
                     
                     // Remove foot
                     feet.splice(i, 1);
+                    i--; // Adjust index after removal
+                    
+                    // Break after processing one collision
+                    break;
+                }
+            }
+            
+            // Check for sword-karate man collisions
+            for (let i = 0; i < karateMen.length; i++) {
+                const karateMan = karateMen[i];
+                
+                // Check collision with sword hitbox
+                if (distance(swordPos.x, swordPos.y, karateMan.x, karateMan.y) < swordHitboxRadius + karateMan.radius) {
+                    // Create explosion particles
+                    createExplosion(karateMan.x, karateMan.y, false);
+                    
+                    // Increase score
+                    score += 35; // Karate men are worth 35 points
+                    if (scoreValue) scoreValue.textContent = score;
+                    
+                    // Remove karate man
+                    karateMen.splice(i, 1);
                     i--; // Adjust index after removal
                     
                     // Break after processing one collision
@@ -1888,6 +2190,52 @@ function checkCollisions() {
                 
                 // Process only one collision per frame
                 break;
+            }
+        }
+        
+        // Check for ship-karate man collisions (only if ship is not invincible and visible)
+        // Karate men don't target the ship, but accidental collisions can still happen
+        for (let i = 0; i < karateMen.length; i++) {
+            const karateMan = karateMen[i];
+            
+            if (distance(0, 0, karateMan.x, karateMan.y) < ship.radius * shipSizeMultiplier + karateMan.radius) {
+                // Create explosion particles for both ship and karate man
+                createExplosion(0, 0, false); // Ship explosion
+                createExplosion(karateMan.x, karateMan.y, false); // Karate man explosion
+                
+                // Increase score for destroying the karate man
+                score += 35; // Karate men are worth 35 points
+                if (scoreValue) scoreValue.textContent = score;
+                
+                // Remove the karate man that was collided with
+                karateMen.splice(i, 1);
+                i--; // Adjust index after removal
+                
+                // Lose a life
+                // Check if force field is active to negate damage
+                if (forceFieldActive) {
+                    // Destroy force field instead of losing a life
+                    forceFieldActive = false;
+                    forceFieldLifetime = 0;
+                    // Create visual effect for force field destruction
+                    createExplosion(0, 0, false);
+                } else {
+                    lives--;
+                    if (livesValue) livesValue.textContent = lives;
+                    
+                    // Reset ship velocity to zero
+                    ship.velocity.x = 0;
+                    ship.velocity.y = 0;
+                    
+                    // Check for game over
+                    if (lives <= 0) {
+                        endGame();
+                    } else {
+                        // Make ship invisible for 2 seconds (120 frames at 60fps)
+                        ship.visible = false;
+                        ship.respawnTime = 120;
+                    }
+                }
             }
         }
         
@@ -2217,6 +2565,86 @@ function checkMineExplosion(x, y, radius) {
             mines.splice(i, 1);
         }
     }
+    
+    // Check for army men within explosion radius
+    for (let i = armyMen.length - 1; i >= 0; i--) {
+        const armyMan = armyMen[i];
+        if (distance(x, y, armyMan.x, armyMan.y) < radius) {
+            // Create explosion particles for the destroyed army man
+            createExplosion(armyMan.x, armyMan.y, false);
+            
+            // Increase score
+            score += 25; // Army men are worth 25 points
+            if (scoreValue) scoreValue.textContent = score;
+            
+            // Remove army man
+            armyMen.splice(i, 1);
+        }
+    }
+    
+    // Check for karate men within explosion radius
+    for (let i = karateMen.length - 1; i >= 0; i--) {
+        const karateMan = karateMen[i];
+        if (distance(x, y, karateMan.x, karateMan.y) < radius) {
+            // Create explosion particles for the destroyed karate man
+            createExplosion(karateMan.x, karateMan.y, false);
+            
+            // Increase score
+            score += 35; // Karate men are worth 35 points
+            if (scoreValue) scoreValue.textContent = score;
+            
+            // Remove karate man
+            karateMen.splice(i, 1);
+        }
+    }
+    
+    // Check for turrets within explosion radius
+    for (let i = turrets.length - 1; i >= 0; i--) {
+        const turret = turrets[i];
+        if (distance(x, y, turret.x, turret.y) < radius) {
+            // Create explosion particles for the destroyed turret
+            createExplosion(turret.x, turret.y, false);
+            
+            // Increase score
+            score += 50; // Turrets are worth 50 points
+            if (scoreValue) scoreValue.textContent = score;
+            
+            // Remove turret
+            turrets.splice(i, 1);
+        }
+    }
+    
+    // Check for roses within explosion radius
+    for (let i = roses.length - 1; i >= 0; i--) {
+        const rose = roses[i];
+        if (distance(x, y, rose.x, rose.y) < radius) {
+            // Create explosion particles for the destroyed rose
+            createExplosion(rose.x, rose.y, false);
+            
+            // Increase score
+            score += 75; // Roses are worth 75 points
+            if (scoreValue) scoreValue.textContent = score;
+            
+            // Remove rose
+            roses.splice(i, 1);
+        }
+    }
+    
+    // Check for feet within explosion radius
+    for (let i = feet.length - 1; i >= 0; i--) {
+        const foot = feet[i];
+        if (distance(x, y, foot.x, foot.y) < radius) {
+            // Create explosion particles for the destroyed foot
+            createExplosion(foot.x, foot.y, false);
+            
+            // Increase score
+            score += 30; // Feet are worth 30 points
+            if (scoreValue) scoreValue.textContent = score;
+            
+            // Remove foot
+            feet.splice(i, 1);
+        }
+    }
 }
 
 // Calculate distance between two points
@@ -2273,6 +2701,13 @@ function destroyAllEnemies() {
         score += 25;
     }
     
+    // Create explosions for all karate men
+    for (const karateMan of karateMen) {
+        createExplosion(karateMan.x, karateMan.y, false);
+        // Increase score for each karate man
+        score += 35;
+    }
+    
     // Create explosions for all roses
     for (const rose of roses) {
         createExplosion(rose.x, rose.y, false);
@@ -2295,6 +2730,7 @@ function destroyAllEnemies() {
     mines = [];
     turrets = [];
     armyMen = [];
+    karateMen = [];
     roses = [];
     feet = [];
     
@@ -2371,6 +2807,9 @@ function render() {
         
         // Draw army men
         drawArmyMen();
+        
+        // Draw karate men
+        drawKarateMen();
         
         // Draw powerups
         drawPowerups();
@@ -2666,6 +3105,69 @@ function drawArmyMen() {
         ctx.lineTo(-armyMan.radius, armyMan.radius/1.5);
         ctx.closePath();
         ctx.stroke();
+        ctx.restore();
+    }
+}
+
+// Draw all karate men
+function drawKarateMen() {
+    ctx.strokeStyle = 'orange';
+    ctx.lineWidth = 2;
+    for (const karateMan of karateMen) {
+        // Calculate screen position relative to ship
+        const screenX = karateMan.x - ship.x + canvas.width / 2;
+        const screenY = karateMan.y - ship.y + canvas.height / 2;
+        
+        ctx.save();
+        ctx.translate(screenX, screenY);
+        
+        // Rotate for spinning effect
+        ctx.rotate(karateMan.spinAngle);
+        
+        // Draw karate man body (circle)
+        ctx.beginPath();
+        ctx.arc(0, 0, karateMan.radius * 0.7, 0, Math.PI * 2); // Made body larger
+        ctx.stroke();
+        
+        // Draw karate man head (smaller circle)
+        ctx.beginPath();
+        ctx.arc(0, -karateMan.radius * 1.0, karateMan.radius * 0.5, 0, Math.PI * 2); // Made head larger
+        ctx.stroke();
+        
+        // Draw arms
+        ctx.beginPath();
+        // Left arm
+        if (karateMan.kickEffect > 0) {
+            // Kicking pose - arm extended
+            ctx.moveTo(-karateMan.radius * 0.7, 0);
+            ctx.lineTo(-karateMan.radius * 1.8, -karateMan.radius * 0.7);
+        } else {
+            // Normal pose - arms at sides
+            ctx.moveTo(-karateMan.radius * 0.7, 0);
+            ctx.lineTo(-karateMan.radius * 1.5, 0);
+        }
+        // Right arm
+        ctx.moveTo(karateMan.radius * 0.7, 0);
+        ctx.lineTo(karateMan.radius * 1.5, 0);
+        ctx.stroke();
+        
+        // Draw legs
+        ctx.beginPath();
+        // Left leg
+        ctx.moveTo(-karateMan.radius * 0.4, karateMan.radius * 0.7);
+        ctx.lineTo(-karateMan.radius * 0.6, karateMan.radius * 1.5);
+        // Right leg
+        if (karateMan.kickEffect > 0) {
+            // Kicking pose - leg extended forward
+            ctx.moveTo(karateMan.radius * 0.4, karateMan.radius * 0.7);
+            ctx.lineTo(karateMan.radius * 1.5, karateMan.radius * 1.0);
+        } else {
+            // Normal pose - legs together
+            ctx.moveTo(karateMan.radius * 0.4, karateMan.radius * 0.7);
+            ctx.lineTo(karateMan.radius * 0.6, karateMan.radius * 1.5);
+        }
+        ctx.stroke();
+        
         ctx.restore();
     }
 }
@@ -3128,6 +3630,11 @@ function drawRadarIndicators() {
         drawRadarIndicator(armyMan.x, armyMan.y, 'red');
     }
     
+    // Draw indicators for karate men
+    for (const karateMan of karateMen) {
+        drawRadarIndicator(karateMan.x, karateMan.y, 'orange');
+    }
+    
     // Draw indicators for feet
     for (const foot of feet) {
         drawRadarIndicator(foot.x, foot.y, 'brown');
@@ -3331,6 +3838,18 @@ function findClosestTarget() {
         }
     }
     
+    // Check karate men
+    for (const karateMan of karateMen) {
+        const dx = karateMan.x - eatingMouse.x;
+        const dy = karateMan.y - eatingMouse.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestTarget = { type: 'karateMan', object: karateMan, x: karateMan.x, y: karateMan.y };
+        }
+    }
+    
     // Check roses
     for (const rose of roses) {
         const dx = rose.x - eatingMouse.x;
@@ -3422,6 +3941,16 @@ function eatTarget(target) {
                 createExplosion(target.object.x, target.object.y, false);
                 score += 25;
                 armyMen.splice(armyManIndex, 1);
+            }
+            break;
+            
+        case 'karateMan':
+            // Find and remove the karate man
+            const karateManIndex = karateMen.indexOf(target.object);
+            if (karateManIndex !== -1) {
+                createExplosion(target.object.x, target.object.y, false);
+                score += 35;
+                karateMen.splice(karateManIndex, 1);
             }
             break;
             
