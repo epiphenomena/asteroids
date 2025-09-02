@@ -209,6 +209,16 @@ function setupEventListeners() {
     
     // Handle window resize
     window.addEventListener('resize', resizeCanvas);
+    
+    // Add keypress event for testing the random powerup spawn
+    document.addEventListener('keydown', (e) => {
+        // Press 'P' key to spawn a random powerup (only when game is started and not over)
+        if (e.key === 'p' || e.key === 'P') {
+            if (gameStarted && !gameOver) {
+                spawnRandomPowerup();
+            }
+        }
+    });
 }
 
 // Reset game state
@@ -647,6 +657,40 @@ function createArmyMenGroup(count) {
     for (let i = 0; i < count; i++) {
         createArmyMan();
     }
+}
+
+// Spawn a random powerup with a randomly selected ability
+function spawnRandomPowerup() {
+    // All available powerup types
+    const powerupTypes = [
+        'bulletSize',
+        'forceField',
+        'shipSize',
+        'sword',
+        'speedBoost',
+        'shipShape',
+        'shipDestroy',
+        'eatEverything'
+    ];
+    
+    // Select a random powerup type
+    const randomType = powerupTypes[Math.floor(Math.random() * powerupTypes.length)];
+    
+    // Create powerup at a random position, but not too close to the center
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 200 + Math.random() * 300; // 200-500 pixels from center
+    const x = Math.cos(angle) * distance;
+    const y = Math.sin(angle) * distance;
+    
+    const powerup = {
+        x: x,
+        y: y,
+        radius: 12,
+        type: randomType,
+        pulse: 0 // For animation
+    };
+    
+    powerups.push(powerup);
 }
 
 // Main game loop
