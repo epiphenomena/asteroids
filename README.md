@@ -1,6 +1,7 @@
 # asteroids
 Your basic asteroids clone with explosive mines
 
+This entire project other than the contents of this file is vibe coded by a 4th grader using the Qwen coder cli.
 
 Asteroids is a game where the user is a small triangular ship that shoots asteroid destroying bullets out the front and flies around in space.
 The space is sized based upon the viewport and just outside the viewport it wraps around to the opposing side. So asteroids that float off one side eventually appear coming back in the other side.
