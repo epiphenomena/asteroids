@@ -211,15 +211,7 @@ function setupEventListeners() {
     // Handle window resize
     window.addEventListener('resize', resizeCanvas);
     
-    // Add keypress event for testing the random powerup spawn
-    document.addEventListener('keydown', (e) => {
-        // Press 'P' key to spawn a random powerup (only when game is started and not over)
-        if (e.key === 'p' || e.key === 'P') {
-            if (gameStarted && !gameOver) {
-                spawnRandomPowerup();
-            }
-        }
-    });
+    // No keypress events needed for spawning objects
 }
 
 // Reset game state
@@ -284,6 +276,12 @@ function resetGame() {
     waveTimer = 0; // Reset wave timer
     forceFieldActive = false; // Reset force field
     forceFieldLifetime = 0; // Reset force field lifetime
+    
+    // Reset score and lives for a fresh game
+    score = 0;
+    lives = 3;
+    if (scoreValue) scoreValue.textContent = score;
+    if (livesValue) livesValue.textContent = lives;
 }
 
 // Create a specified number of asteroids
@@ -301,25 +299,40 @@ function createAsteroid(size = 3, x = null, y = null, forceMine = false) {
     // If position not specified, create at random edge relative to ship position
     if (x === null || y === null) {
         const side = Math.floor(Math.random() * 4);
-        const buffer = 200; // Increased distance from screen edge to prevent immediate collisions
+        const buffer = 300; // Increased distance from screen edge to prevent immediate collisions
         
         switch (side) {
             case 0: // Top
-                x = (Math.random() * canvas.width - canvas.width / 2);
+                // Ensure minimum distance from center in x direction
+                x = (Math.random() * (canvas.width - 400) - (canvas.width / 2 - 200));
                 y = - canvas.height / 2 - buffer;
                 break;
             case 1: // Right
                 x = canvas.width / 2 + buffer;
-                y = (Math.random() * canvas.height - canvas.height / 2);
+                // Ensure minimum distance from center in y direction
+                y = (Math.random() * (canvas.height - 400) - (canvas.height / 2 - 200));
                 break;
             case 2: // Bottom
-                x = (Math.random() * canvas.width - canvas.width / 2);
+                // Ensure minimum distance from center in x direction
+                x = (Math.random() * (canvas.width - 400) - (canvas.width / 2 - 200));
                 y = canvas.height / 2 + buffer;
                 break;
             case 3: // Left
                 x = - canvas.width / 2 - buffer;
-                y = (Math.random() * canvas.height - canvas.height / 2);
+                // Ensure minimum distance from center in y direction
+                y = (Math.random() * (canvas.height - 400) - (canvas.height / 2 - 200));
                 break;
+        }
+        
+        // Ensure asteroids are not created too close to the player (at center)
+        // Check distance to center (0,0) and move if too close
+        const distanceToCenter = Math.sqrt(x * x + y * y);
+        const minDistance = 300; // Increased minimum distance from center
+        if (distanceToCenter < minDistance) {
+            // Normalize the position vector and scale to minimum distance
+            const scale = minDistance / distanceToCenter;
+            x *= scale;
+            y *= scale;
         }
     }
     
@@ -368,11 +381,11 @@ function createTurret(x = null, y = null) {
     
     // Check if turret position is too close to the center (ship start position)
     const distanceFromCenter = Math.sqrt(x * x + y * y);
-    if (distanceFromCenter < 150) {
+    if (distanceFromCenter < 250) { // Increased minimum distance
         // Move turret away from center if too close
         const angle = Math.atan2(y, x);
-        x = Math.cos(angle) * 150;
-        y = Math.sin(angle) * 150;
+        x = Math.cos(angle) * 250; // Increased distance
+        y = Math.sin(angle) * 250; // Increased distance
     }
     
     // Check for collisions with existing asteroids/mines/turrets (try up to 20 times)
@@ -388,18 +401,29 @@ function createTurret(x = null, y = null) {
             const dx = x - asteroid.x;
             const dy = y - asteroid.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance < 25 + asteroid.radius) {
+            if (distance < 35 + asteroid.radius) { // Increased minimum distance
                 collision = true;
                 // Move turret to a different position along screen edges
                 const edges = [
-                    {x: Math.random() * canvas.width - canvas.width / 2, y: -canvas.height / 2 + 30}, // Top edge
-                    {x: Math.random() * canvas.width - canvas.width / 2, y: canvas.height / 2 - 30}, // Bottom edge
-                    {x: canvas.width / 2 - 30, y: Math.random() * canvas.height - canvas.height / 2}, // Right edge
-                    {x: -canvas.width / 2 + 30, y: Math.random() * canvas.height - canvas.height / 2}  // Left edge
+                    {x: Math.random() * canvas.width - canvas.width / 2, y: -canvas.height / 2 + 50}, // Top edge
+                    {x: Math.random() * canvas.width - canvas.width / 2, y: canvas.height / 2 - 50}, // Bottom edge
+                    {x: canvas.width / 2 - 50, y: Math.random() * canvas.height - canvas.height / 2}, // Right edge
+                    {x: -canvas.width / 2 + 50, y: Math.random() * canvas.height - canvas.height / 2}  // Left edge
                 ];
                 const edge = edges[Math.floor(Math.random() * edges.length)];
-                x = edge.x + (Math.random() - 0.5) * 50;
-                y = edge.y + (Math.random() - 0.5) * 50;
+                x = edge.x + (Math.random() - 0.5) * 100;
+                y = edge.y + (Math.random() - 0.5) * 100;
+                
+                // Ensure turrets are not created too close to the player (at center)
+                // Check distance to center (0,0) and move if too close
+                const distanceToCenter = Math.sqrt(x * x + y * y);
+                const minDistance = 250; // Increased minimum distance
+                if (distanceToCenter < minDistance) {
+                    // Normalize the position vector and scale to minimum distance
+                    const scale = minDistance / distanceToCenter;
+                    x *= scale;
+                    y *= scale;
+                }
                 break;
             }
         }
@@ -410,18 +434,29 @@ function createTurret(x = null, y = null) {
                 const dx = x - mine.x;
                 const dy = y - mine.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
-                if (distance < 25 + mine.radius) {
+                if (distance < 35 + mine.radius) { // Increased minimum distance
                     collision = true;
                     // Move turret to a different position along screen edges
                     const edges = [
-                        {x: Math.random() * canvas.width - canvas.width / 2, y: -canvas.height / 2 + 30}, // Top edge
-                        {x: Math.random() * canvas.width - canvas.width / 2, y: canvas.height / 2 - 30}, // Bottom edge
-                        {x: canvas.width / 2 - 30, y: Math.random() * canvas.height - canvas.height / 2}, // Right edge
-                        {x: -canvas.width / 2 + 30, y: Math.random() * canvas.height - canvas.height / 2}  // Left edge
+                        {x: Math.random() * canvas.width - canvas.width / 2, y: -canvas.height / 2 + 50}, // Top edge
+                        {x: Math.random() * canvas.width - canvas.width / 2, y: canvas.height / 2 - 50}, // Bottom edge
+                        {x: canvas.width / 2 - 50, y: Math.random() * canvas.height - canvas.height / 2}, // Right edge
+                        {x: -canvas.width / 2 + 50, y: Math.random() * canvas.height - canvas.height / 2}  // Left edge
                     ];
                     const edge = edges[Math.floor(Math.random() * edges.length)];
-                    x = edge.x + (Math.random() - 0.5) * 50;
-                    y = edge.y + (Math.random() - 0.5) * 50;
+                    x = edge.x + (Math.random() - 0.5) * 100;
+                    y = edge.y + (Math.random() - 0.5) * 100;
+                    
+                    // Ensure turrets are not created too close to the player (at center)
+                    // Check distance to center (0,0) and move if too close
+                    const distanceToCenter = Math.sqrt(x * x + y * y);
+                    const minDistance = 250; // Increased minimum distance
+                    if (distanceToCenter < minDistance) {
+                        // Normalize the position vector and scale to minimum distance
+                        const scale = minDistance / distanceToCenter;
+                        x *= scale;
+                        y *= scale;
+                    }
                     break;
                 }
             }
@@ -433,18 +468,29 @@ function createTurret(x = null, y = null) {
                 const dx = x - turret.x;
                 const dy = y - turret.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
-                if (distance < 35) { // Minimum distance between turrets
+                if (distance < 50) { // Increased minimum distance between turrets
                     collision = true;
                     // Move turret to a different position along screen edges
                     const edges = [
-                        {x: Math.random() * canvas.width - canvas.width / 2, y: -canvas.height / 2 + 30}, // Top edge
-                        {x: Math.random() * canvas.width - canvas.width / 2, y: canvas.height / 2 - 30}, // Bottom edge
-                        {x: canvas.width / 2 - 30, y: Math.random() * canvas.height - canvas.height / 2}, // Right edge
-                        {x: -canvas.width / 2 + 30, y: Math.random() * canvas.height - canvas.height / 2}  // Left edge
+                        {x: Math.random() * canvas.width - canvas.width / 2, y: -canvas.height / 2 + 50}, // Top edge
+                        {x: Math.random() * canvas.width - canvas.width / 2, y: canvas.height / 2 - 50}, // Bottom edge
+                        {x: canvas.width / 2 - 50, y: Math.random() * canvas.height - canvas.height / 2}, // Right edge
+                        {x: -canvas.width / 2 + 50, y: Math.random() * canvas.height - canvas.height / 2}  // Left edge
                     ];
                     const edge = edges[Math.floor(Math.random() * edges.length)];
-                    x = edge.x + (Math.random() - 0.5) * 50;
-                    y = edge.y + (Math.random() - 0.5) * 50;
+                    x = edge.x + (Math.random() - 0.5) * 100;
+                    y = edge.y + (Math.random() - 0.5) * 100;
+                    
+                    // Ensure turrets are not created too close to the player (at center)
+                    // Check distance to center (0,0) and move if too close
+                    const distanceToCenter = Math.sqrt(x * x + y * y);
+                    const minDistance = 250; // Increased minimum distance
+                    if (distanceToCenter < minDistance) {
+                        // Normalize the position vector and scale to minimum distance
+                        const scale = minDistance / distanceToCenter;
+                        x *= scale;
+                        y *= scale;
+                    }
                     break;
                 }
             }
@@ -469,25 +515,40 @@ function createArmyMan(x = null, y = null) {
     // If position not specified, create at random edge relative to ship position
     if (x === null || y === null) {
         const side = Math.floor(Math.random() * 4);
-        const buffer = 200; // Distance from screen edge
+        const buffer = 300; // Increased distance from screen edge
         
         switch (side) {
             case 0: // Top
-                x = (Math.random() * canvas.width - canvas.width / 2);
+                // Ensure minimum distance from center in x direction
+                x = (Math.random() * (canvas.width - 400) - (canvas.width / 2 - 200));
                 y = - canvas.height / 2 - buffer;
                 break;
             case 1: // Right
                 x = canvas.width / 2 + buffer;
-                y = (Math.random() * canvas.height - canvas.height / 2);
+                // Ensure minimum distance from center in y direction
+                y = (Math.random() * (canvas.height - 400) - (canvas.height / 2 - 200));
                 break;
             case 2: // Bottom
-                x = (Math.random() * canvas.width - canvas.width / 2);
+                // Ensure minimum distance from center in x direction
+                x = (Math.random() * (canvas.width - 400) - (canvas.width / 2 - 200));
                 y = canvas.height / 2 + buffer;
                 break;
             case 3: // Left
                 x = - canvas.width / 2 - buffer;
-                y = (Math.random() * canvas.height - canvas.height / 2);
+                // Ensure minimum distance from center in y direction
+                y = (Math.random() * (canvas.height - 400) - (canvas.height / 2 - 200));
                 break;
+        }
+        
+        // Ensure army men are not created too close to the player (at center)
+        // Check distance to center (0,0) and move if too close
+        const distanceToCenter = Math.sqrt(x * x + y * y);
+        const minDistance = 300; // Increased minimum distance from center
+        if (distanceToCenter < minDistance) {
+            // Normalize the position vector and scale to minimum distance
+            const scale = minDistance / distanceToCenter;
+            x *= scale;
+            y *= scale;
         }
     }
     
@@ -516,9 +577,20 @@ function createForceFieldPowerup(x = null, y = null) {
     if (x === null || y === null) {
         // Create powerup at a random position, but not too close to the center
         const angle = Math.random() * Math.PI * 2;
-        const distance = 200 + Math.random() * 300; // 200-500 pixels from center
+        const distance = 250 + Math.random() * 300; // 250-550 pixels from center
         x = Math.cos(angle) * distance;
         y = Math.sin(angle) * distance;
+        
+        // Ensure powerups are not created too close to the player (at center)
+        // Check distance to center (0,0) and move if too close
+        const distanceToCenter = Math.sqrt(x * x + y * y);
+        const minDistance = 250; // Minimum distance from center
+        if (distanceToCenter < minDistance) {
+            // Normalize the position vector and scale to minimum distance
+            const scale = minDistance / distanceToCenter;
+            x *= scale;
+            y *= scale;
+        }
     }
     
     const powerup = {
@@ -538,9 +610,20 @@ function createPowerup(x = null, y = null) {
     if (x === null || y === null) {
         // Create powerup at a random position, but not too close to the center
         const angle = Math.random() * Math.PI * 2;
-        const distance = 200 + Math.random() * 300; // 200-500 pixels from center
+        const distance = 250 + Math.random() * 300; // 250-550 pixels from center
         x = Math.cos(angle) * distance;
         y = Math.sin(angle) * distance;
+        
+        // Ensure powerups are not created too close to the player (at center)
+        // Check distance to center (0,0) and move if too close
+        const distanceToCenter = Math.sqrt(x * x + y * y);
+        const minDistance = 250; // Minimum distance from center
+        if (distanceToCenter < minDistance) {
+            // Normalize the position vector and scale to minimum distance
+            const scale = minDistance / distanceToCenter;
+            x *= scale;
+            y *= scale;
+        }
     }
     
     // 50% chance for eat everything mouse powerup, 50% for ship destroy trap powerup
@@ -570,9 +653,20 @@ function createRose(x = null, y = null) {
     if (x === null || y === null) {
         // Create rose at a random position, but not too close to the center
         const angle = Math.random() * Math.PI * 2;
-        const distance = 300 + Math.random() * 200; // 300-500 pixels from center
+        const distance = 350 + Math.random() * 200; // 350-550 pixels from center
         x = Math.cos(angle) * distance;
         y = Math.sin(angle) * distance;
+        
+        // Ensure roses are not created too close to the player (at center)
+        // Check distance to center (0,0) and move if too close
+        const distanceToCenter = Math.sqrt(x * x + y * y);
+        const minDistance = 350; // Minimum distance from center
+        if (distanceToCenter < minDistance) {
+            // Normalize the position vector and scale to minimum distance
+            const scale = minDistance / distanceToCenter;
+            x *= scale;
+            y *= scale;
+        }
     }
     
     const rose = {
@@ -600,9 +694,20 @@ function createFoot(x = null, y = null) {
     if (x === null || y === null) {
         // Create foot at a random position, but not too close to the center
         const angle = Math.random() * Math.PI * 2;
-        const distance = 200 + Math.random() * 300; // 200-500 pixels from center
+        const distance = 250 + Math.random() * 300; // 250-550 pixels from center
         x = Math.cos(angle) * distance;
         y = Math.sin(angle) * distance;
+        
+        // Ensure feet are not created too close to the player (at center)
+        // Check distance to center (0,0) and move if too close
+        const distanceToCenter = Math.sqrt(x * x + y * y);
+        const minDistance = 250; // Minimum distance from center
+        if (distanceToCenter < minDistance) {
+            // Normalize the position vector and scale to minimum distance
+            const scale = minDistance / distanceToCenter;
+            x *= scale;
+            y *= scale;
+        }
     }
     
     // Check if there's already a foot at this position (or very close)
@@ -622,9 +727,20 @@ function createFoot(x = null, y = null) {
         let attempts = 0;
         while (isPositionOccupied && attempts < 10) {
             const angle = Math.random() * Math.PI * 2;
-            const distance = 200 + Math.random() * 300; // 200-500 pixels from center
+            const distance = 250 + Math.random() * 300; // 250-550 pixels from center
             x = Math.cos(angle) * distance;
             y = Math.sin(angle) * distance;
+            
+            // Ensure feet are not created too close to the player (at center)
+            // Check distance to center (0,0) and move if too close
+            const distanceToCenter = Math.sqrt(x * x + y * y);
+            const minDistance = 250; // Minimum distance from center
+            if (distanceToCenter < minDistance) {
+                // Normalize the position vector and scale to minimum distance
+                const scale = minDistance / distanceToCenter;
+                x *= scale;
+                y *= scale;
+            }
             
             isPositionOccupied = false;
             for (const foot of feet) {
@@ -659,25 +775,40 @@ function createKarateMan(x = null, y = null) {
     // If position not specified, create at random edge relative to ship position
     if (x === null || y === null) {
         const side = Math.floor(Math.random() * 4);
-        const buffer = 200; // Distance from screen edge
+        const buffer = 300; // Increased distance from screen edge
         
         switch (side) {
             case 0: // Top
-                x = (Math.random() * canvas.width - canvas.width / 2);
+                // Ensure minimum distance from center in x direction
+                x = (Math.random() * (canvas.width - 400) - (canvas.width / 2 - 200));
                 y = - canvas.height / 2 - buffer;
                 break;
             case 1: // Right
                 x = canvas.width / 2 + buffer;
-                y = (Math.random() * canvas.height - canvas.height / 2);
+                // Ensure minimum distance from center in y direction
+                y = (Math.random() * (canvas.height - 400) - (canvas.height / 2 - 200));
                 break;
             case 2: // Bottom
-                x = (Math.random() * canvas.width - canvas.width / 2);
+                // Ensure minimum distance from center in x direction
+                x = (Math.random() * (canvas.width - 400) - (canvas.width / 2 - 200));
                 y = canvas.height / 2 + buffer;
                 break;
             case 3: // Left
                 x = - canvas.width / 2 - buffer;
-                y = (Math.random() * canvas.height - canvas.height / 2);
+                // Ensure minimum distance from center in y direction
+                y = (Math.random() * (canvas.height - 400) - (canvas.height / 2 - 200));
                 break;
+        }
+        
+        // Ensure karate men are not created too close to the player (at center)
+        // Check distance to center (0,0) and move if too close
+        const distanceToCenter = Math.sqrt(x * x + y * y);
+        const minDistance = 300; // Increased minimum distance from center
+        if (distanceToCenter < minDistance) {
+            // Normalize the position vector and scale to minimum distance
+            const scale = minDistance / distanceToCenter;
+            x *= scale;
+            y *= scale;
         }
     }
     
@@ -838,6 +969,13 @@ function checkKarateManCollisions(karateMan) {
 function createKarateMenGroup(count) {
     for (let i = 0; i < count; i++) {
         createKarateMan();
+    }
+}
+
+// Create a group of turrets for testing
+function createTurretGroup(count) {
+    for (let i = 0; i < count; i++) {
+        createTurret();
     }
 }
 
@@ -1212,6 +1350,21 @@ function updateMines() {
         // Update relative position after wrapping
         mine.x = mine.worldX - ship.x;
         mine.y = mine.worldY - ship.y;
+        
+        // Ensure mines are not created too close to the player (at center)
+        // Check distance to center (0,0) and move if too close
+        const distanceToCenter = Math.sqrt(mine.x * mine.x + mine.y * mine.y);
+        const minDistance = 200; // Minimum distance from center
+        if (distanceToCenter < minDistance && mine.x !== 0 && mine.y !== 0) {
+            // Normalize the position vector and scale to minimum distance
+            const scale = minDistance / distanceToCenter;
+            mine.x *= scale;
+            mine.y *= scale;
+            
+            // Update world coordinates as well
+            mine.worldX = mine.x + ship.x;
+            mine.worldY = mine.y + ship.y;
+        }
     }
 }
 
@@ -1557,23 +1710,31 @@ function updateWaves() {
     }
     
     // Check if all enemies from current wave are defeated
+    // Only spawn next wave if we're not on wave 1 with no enemies (game start)
     if (asteroids.length === 0 && mines.length === 0 && armyMen.length === 0) {
-        // All enemies defeated, spawn next wave
-        waveNumber++;
-        
-        // Check if player has won after incrementing wave number
-        if (waveNumber > 15) {
-            winGame();
-            return;
+        // Special case: if we're on wave 1 and have no enemies, this is game start
+        // Spawn initial wave without incrementing wave number
+        if (waveNumber === 1) {
+            spawnWaveEnemies();
+            console.log(`Initial wave ${waveNumber} spawned!`);
+        } else {
+            // All enemies defeated, spawn next wave
+            waveNumber++;
+            
+            // Check if player has won after incrementing wave number
+            if (waveNumber > 15) {
+                winGame();
+                return;
+            }
+            
+            // Spawn new enemies for the next wave
+            spawnWaveEnemies();
+            
+            // Update UI
+            if (waveValue) waveValue.textContent = waveNumber;
+            
+            console.log(`Wave ${waveNumber} spawned!`);
         }
-        
-        // Spawn new enemies for the next wave
-        spawnWaveEnemies();
-        
-        // Update UI
-        if (waveValue) waveValue.textContent = waveNumber;
-        
-        console.log(`Wave ${waveNumber} spawned!`);
     }
     
     // No timer-based wave spawning anymore
@@ -1581,50 +1742,53 @@ function updateWaves() {
 
 // Spawn enemies for current wave
 function spawnWaveEnemies() {
-    // Create asteroids (increase by 1 every wave)
-    const asteroidCount = waveNumber; // 1, 2, 3, 4, 5, etc.
+    // Create asteroids (increase by 2 every wave)
+    const asteroidCount = waveNumber * 2; // 2, 4, 6, 8, 10, etc.
     createAsteroids(asteroidCount);
     
-    // Create mines (start with 0, increase by 1 every 3 waves)
-    const mineCount = Math.floor(waveNumber / 3); // 0, 0, 0, 1, 1, 1, 2, 2, 2, etc.
+    // Create mines (start with 1, increase by 1 every 2 waves)
+    const mineCount = Math.max(1, Math.floor(waveNumber / 2)); // 1, 1, 2, 2, 3, 3, etc.
     for (let i = 0; i < mineCount; i++) {
         createAsteroid(3, null, null, true); // Create large mines
     }
     
-    // Create army men groups (3 army men every wave)
-    createArmyMenGroup(3); // 3 army men every wave
+    // Create army men groups (5 army men every wave)
+    createArmyMenGroup(5); // 5 army men every wave
     
-    // Create karate men groups (1 karate man every wave starting from wave 2)
+    // Create karate men groups (2 karate men every wave starting from wave 2)
     if (waveNumber > 1) {
-        createKarateMenGroup(1); // 1 karate man every wave starting from wave 2
+        createKarateMenGroup(2); // 2 karate men every wave starting from wave 2
     }
     
-    // Create turrets (add new ones every 2 waves, increasing frequency)
-    if (waveNumber > 1) {
-        // Create more turrets as waves progress
-        const turretCount = Math.min(1 + Math.floor(waveNumber / 3), 4); // Start with 1, max 4
-        for (let i = 0; i < turretCount; i++) {
-            createTurret(); // Add turrets
-        }
+    // Create turrets (add new ones every wave, increasing frequency)
+    // Start with 2 turrets in wave 1, then add 1 more each wave
+    const turretCount = Math.min(2 + waveNumber, 8); // Start with 2, max 8
+    for (let i = 0; i < turretCount; i++) {
+        createTurret(); // Add turrets
     }
     
     // Create powerups (more frequent as game progresses)
-    if (waveNumber % 2 === 1 || Math.random() < 0.4) { // Increased random chance
+    if (waveNumber % 2 === 1 || Math.random() < 0.6) { // Increased random chance
         createPowerup();
     }
     
-    // Create roses (add new ones every 2 waves, more frequent)
-    if (waveNumber > 1 && waveNumber % 2 === 0) { // Start at wave 2, then every 2 waves
-        createRose(); // Add one new rose
-    }
+    // Create roses (add new ones every wave)
+    createRose(); // Add one new rose every wave
     
-    // Create feet with 50% spawn rate
-    if (Math.random() < 0.5) {
-        createFoot(); // Add one foot with 50% chance
+    // Create feet with 70% spawn rate
+    if (Math.random() < 0.7) {
+        createFoot(); // Add one foot with 70% chance
     }
     
     // Create a force field powerup every wave
     createForceFieldPowerup();
+    
+    // Make ship temporarily invincible when spawning a new wave
+    // This gives the player a moment to react to the new wave
+    if (ship && ship.visible) {
+        ship.invincible = true;
+        ship.invincibilityTime = 180; // 3 seconds at 60fps
+    }
 }
 
 // Check for collisions between bullets and asteroids/mines, and ship and asteroids/mines
@@ -1650,7 +1814,9 @@ function checkCollisions() {
                 
                 // Remove bullet and asteroid
                 bullets.splice(i, 1);
+                i--; // Adjust index after removal
                 asteroids.splice(j, 1);
+                j--; // Adjust index after removal
                 
                 // If asteroid is large (size 3), split it into medium ones (size 2)
                 // Medium asteroids (size 2) split into small ones (size 1)
@@ -1675,17 +1841,8 @@ function checkCollisions() {
                     }
                 }
                 
-                // If all asteroids are destroyed, create a new wave
-                if (asteroids.length === 0 && mines.length === 0) {
-                    setTimeout(() => {
-                        if (asteroids.length === 0 && mines.length === 0 && !gameOver) {
-                            createAsteroids(3);
-                        }
-                    }, 100);
-                }
-                
-                // Process only one collision per frame
-                return;
+                // Break after processing collision
+                break;
             }
         }
         
@@ -1701,9 +1858,11 @@ function checkCollisions() {
                 
                 // Remove bullet
                 bullets.splice(i, 1);
+                i--; // Adjust index after removal
                 
                 // Remove the mine that was hit
                 mines.splice(j, 1);
+                j--; // Adjust index after removal
                 
                 // Increase score (only if it's a player bullet)
                 if (!bullet.isTurretBullet) {
@@ -1714,17 +1873,8 @@ function checkCollisions() {
                 // Check for objects within explosion radius
                 checkMineExplosion(mine.x, mine.y, explosionRadius);
                 
-                // If all asteroids and mines are destroyed, create a new wave
-                if (asteroids.length === 0 && mines.length === 0) {
-                    setTimeout(() => {
-                        if (asteroids.length === 0 && mines.length === 0 && !gameOver) {
-                            createAsteroids(3);
-                        }
-                    }, 100);
-                }
-                
-                // Process only one collision per frame
-                return;
+                // Break after processing collision
+                break;
             }
         }
         
@@ -1745,12 +1895,14 @@ function checkCollisions() {
                 
                 // Remove bullet
                 bullets.splice(i, 1);
+                i--; // Adjust index after removal
                 
                 // Remove the turret that was hit
                 turrets.splice(j, 1);
+                j--; // Adjust index after removal
                 
                 // Process only one collision per frame
-                return;
+                break;
             }
         }
         
@@ -1771,10 +1923,12 @@ function checkCollisions() {
                 
                 // Remove bullet and army man
                 bullets.splice(i, 1);
+                i--; // Adjust index after removal
                 armyMen.splice(j, 1);
+                j--; // Adjust index after removal
                 
-                // Process only one collision per frame
-                return;
+                // Break after processing collision
+                break;
             }
         }
         
@@ -1795,10 +1949,12 @@ function checkCollisions() {
                 
                 // Remove bullet and foot
                 bullets.splice(i, 1);
+                i--; // Adjust index after removal
                 feet.splice(j, 1);
+                j--; // Adjust index after removal
                 
-                // Process only one collision per frame
-                return;
+                // Break after processing collision
+                break;
             }
         }
         
@@ -1819,10 +1975,12 @@ function checkCollisions() {
                 
                 // Remove bullet and karate man
                 bullets.splice(i, 1);
+                i--; // Adjust index after removal
                 karateMen.splice(j, 1);
+                j--; // Adjust index after removal
                 
-                // Process only one collision per frame
-                return;
+                // Break after processing collision
+                break;
             }
         }
     }
@@ -2419,7 +2577,7 @@ function checkCollisions() {
                         x: 0, // Start at ship position
                         y: 0,
                         radius: 15,
-                        speed: 3.45, // 15% faster than original speed of 3
+                        speed: 3.75, // 25% faster than original speed of 3
                         angle: 0,
                         target: null, // Current target to eat
                         eatTimer: 780 // 13 seconds at 60fps
@@ -2772,15 +2930,7 @@ function splitAsteroid(index) {
         }
     }
     
-    // If all asteroids and mines are destroyed, create a new wave
-    // Add a small delay to avoid immediate creation
-    if (asteroids.length === 0 && mines.length === 0) {
-        setTimeout(() => {
-            if (asteroids.length === 0 && mines.length === 0 && !gameOver) {
-                createAsteroids(3);
-            }
-        }, 100);
-    }
+    // No automatic wave creation here - handled by updateWaves function
 }
 
 // Render everything
