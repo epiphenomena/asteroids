@@ -1711,7 +1711,8 @@ function updateWaves() {
     
     // Check if all enemies from current wave are defeated
     // Only spawn next wave if we're not on wave 1 with no enemies (game start)
-    if (asteroids.length === 0 && mines.length === 0 && armyMen.length === 0) {
+    if (asteroids.length === 0 && mines.length === 0 && armyMen.length === 0 && 
+        turrets.length === 0 && karateMen.length === 0 && roses.length === 0 && feet.length === 0) {
         // Special case: if we're on wave 1 and have no enemies, this is game start
         // Spawn initial wave without incrementing wave number
         if (waveNumber === 1) {
